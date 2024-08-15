@@ -16,33 +16,38 @@
 
 package org.gradle.api.internal.artifacts.transform;
 
-import org.gradle.api.internal.attributes.AttributesSchemaInternal;
+import org.gradle.api.internal.artifacts.VariantTransformRegistry;
+import org.gradle.api.internal.attributes.AttributeSchemaServiceFactory;
 import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
+import org.gradle.api.internal.attributes.immutable.ImmutableAttributesSchema;
 import org.gradle.internal.component.resolution.failure.ResolutionFailureHandler;
 
+import javax.inject.Inject;
+
 public class DefaultVariantSelectorFactory implements VariantSelectorFactory {
-    private final ConsumerProvidedVariantFinder consumerProvidedVariantFinder;
-    private final AttributesSchemaInternal schema;
     private final ImmutableAttributesFactory attributesFactory;
+    private final AttributeSchemaServiceFactory attributeSchemaServices;
     private final TransformedVariantFactory transformedVariantFactory;
     private final ResolutionFailureHandler failureProcessor;
+    private final VariantTransformRegistry transformRegistry;
 
+    @Inject
     public DefaultVariantSelectorFactory(
-        ConsumerProvidedVariantFinder consumerProvidedVariantFinder,
-        AttributesSchemaInternal schema,
         ImmutableAttributesFactory attributesFactory,
+        AttributeSchemaServiceFactory attributeSchemaServices,
         TransformedVariantFactory transformedVariantFactory,
-        ResolutionFailureHandler failureProcessor
+        ResolutionFailureHandler failureProcessor,
+        VariantTransformRegistry transformRegistry
     ) {
-        this.consumerProvidedVariantFinder = consumerProvidedVariantFinder;
-        this.schema = schema;
         this.attributesFactory = attributesFactory;
+        this.attributeSchemaServices = attributeSchemaServices;
         this.transformedVariantFactory = transformedVariantFactory;
         this.failureProcessor = failureProcessor;
+        this.transformRegistry = transformRegistry;
     }
 
     @Override
-    public ArtifactVariantSelector create(TransformUpstreamDependenciesResolverFactory dependenciesResolverFactory) {
-        return new AttributeMatchingArtifactVariantSelector(consumerProvidedVariantFinder, schema, attributesFactory, transformedVariantFactory, dependenciesResolverFactory, failureProcessor);
+    public ArtifactVariantSelector create(ImmutableAttributesSchema schema, TransformUpstreamDependenciesResolverFactory dependenciesResolverFactory) {
+        return new AttributeMatchingArtifactVariantSelector(transformRegistry, schema, attributesFactory, attributeSchemaServices, transformedVariantFactory, dependenciesResolverFactory, failureProcessor);
     }
 }

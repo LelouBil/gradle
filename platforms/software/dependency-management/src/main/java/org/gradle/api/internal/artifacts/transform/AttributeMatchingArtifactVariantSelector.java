@@ -20,10 +20,10 @@ import org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact.Broke
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact.ResolvedArtifactSet;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact.ResolvedVariant;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact.ResolvedVariantSet;
-import org.gradle.api.internal.attributes.AttributesSchemaInternal;
 import org.gradle.api.internal.attributes.ImmutableAttributes;
 import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
-import org.gradle.internal.component.model.AttributeMatcher;
+import org.gradle.api.internal.attributes.immutable.ImmutableAttributesSchema;
+import org.gradle.api.internal.attributes.matching.AttributeMatcher;
 import org.gradle.internal.component.model.AttributeMatchingExplanationBuilder;
 import org.gradle.internal.component.resolution.failure.ResolutionFailureHandler;
 
@@ -40,24 +40,28 @@ import java.util.List;
  * to allow the caller to handle failures in a consistent manner as during graph variant selection.
  */
 public class AttributeMatchingArtifactVariantSelector implements ArtifactVariantSelector {
-    private final ConsumerProvidedVariantFinder consumerProvidedVariantFinder;
-    private final AttributesSchemaInternal schema;
+
+    private final VariantTransformRegistry transformRegistry;
+    private final ImmutableAttributesSchema consumerSchema;
     private final ImmutableAttributesFactory attributesFactory;
+    private final AttributeSchemaServiceFactory attributeSchemaServices;
     private final TransformedVariantFactory transformedVariantFactory;
     private final TransformUpstreamDependenciesResolverFactory dependenciesResolverFactory;
     private final ResolutionFailureHandler failureProcessor;
 
     AttributeMatchingArtifactVariantSelector(
-        ConsumerProvidedVariantFinder consumerProvidedVariantFinder,
-        AttributesSchemaInternal schema,
+        VariantTransformRegistry transformRegistry,
+        ImmutableAttributesSchema consumerSchema,
         ImmutableAttributesFactory attributesFactory,
+        AttributeSchemaServiceFactory attributeSchemaServices,
         TransformedVariantFactory transformedVariantFactory,
         TransformUpstreamDependenciesResolverFactory dependenciesResolverFactory,
         ResolutionFailureHandler failureProcessor
     ) {
-        this.consumerProvidedVariantFinder = consumerProvidedVariantFinder;
-        this.schema = schema;
+        this.transformRegistry = transformRegistry;
+        this.consumerSchema = consumerSchema;
         this.attributesFactory = attributesFactory;
+        this.attributeSchemaServices = attributeSchemaServices;
         this.transformedVariantFactory = transformedVariantFactory;
         this.dependenciesResolverFactory = dependenciesResolverFactory;
         this.failureProcessor = failureProcessor;
@@ -73,7 +77,7 @@ public class AttributeMatchingArtifactVariantSelector implements ArtifactVariant
     }
 
     private ResolvedArtifactSet doSelect(ResolvedVariantSet producer, boolean allowNoMatchingVariants, ResolvedArtifactTransformer resolvedArtifactTransformer, AttributeMatchingExplanationBuilder explanationBuilder, ImmutableAttributes requestAttributes) {
-        AttributeMatcher matcher = schema.withProducer(producer.getSchema());
+        AttributeMatcher matcher = attributeSchemaServices.getMatcher(consumerSchema, producer.getSchema());
         ImmutableAttributes componentRequested = attributesFactory.concat(requestAttributes, producer.getOverriddenAttributes());
         final List<ResolvedVariant> variants = producer.getVariants();
 
@@ -85,7 +89,7 @@ public class AttributeMatchingArtifactVariantSelector implements ArtifactVariant
         }
 
         // We found no matches. Attempt to construct artifact transform chains which produce matching variants.
-        List<TransformedVariant> transformedVariants = consumerProvidedVariantFinder.findTransformedVariants(variants, componentRequested);
+        List<TransformedVariant> transformedVariants = attributeSchemaServices.getTransformSelector(matcher).findTransformedVariants(transformRegistry, variants, componentRequested);
 
         // If there are multiple potential artifact transform variants, perform attribute matching to attempt to find the best.
         if (transformedVariants.size() > 1) {

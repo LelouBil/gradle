@@ -16,15 +16,13 @@
 
 package org.gradle.api.internal.artifacts
 
-import org.gradle.api.attributes.AttributesSchema
 import org.gradle.api.attributes.java.TargetJvmVersion
+import org.gradle.api.internal.attributes.AttributeDescriberRegistry
 import org.gradle.api.internal.attributes.CompatibilityCheckResult
 import org.gradle.api.internal.attributes.CompatibilityRule
-import org.gradle.api.internal.attributes.AttributeDescriberRegistry
-import org.gradle.api.internal.attributes.DefaultAttributesSchema
 import org.gradle.api.internal.attributes.DisambiguationRule
 import org.gradle.api.internal.attributes.MultipleCandidatesResult
-import org.gradle.util.SnapshotTestUtil
+import org.gradle.util.AttributeTestUtil
 import org.gradle.util.TestUtil
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -34,8 +32,9 @@ class TargetJvmVersionRulesTest extends Specification {
     private DisambiguationRule<Object> disambiguationRules
 
     def setup() {
-        AttributesSchema schema = new DefaultAttributesSchema(TestUtil.instantiatorFactory(), SnapshotTestUtil.isolatableFactory())
-        JavaEcosystemSupport.configureServices(schema, Mock(AttributeDescriberRegistry), TestUtil.objectFactory())
+        def schema = AttributeTestUtil.immutableSchema {
+            JavaEcosystemSupport.configureServices(delegate, Mock(AttributeDescriberRegistry), TestUtil.objectFactory())
+        }
         compatibilityRules = schema.compatibilityRules(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE)
         disambiguationRules = schema.disambiguationRules(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE)
     }

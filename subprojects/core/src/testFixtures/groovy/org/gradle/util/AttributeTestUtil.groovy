@@ -16,11 +16,16 @@
 
 package org.gradle.util
 
-
 import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.AttributesSchema
+import org.gradle.api.internal.attributes.AttributeSchemaServiceFactory
+import org.gradle.api.internal.attributes.AttributesSchemaInternal
+import org.gradle.api.internal.attributes.DefaultAttributesSchema
 import org.gradle.api.internal.attributes.DefaultImmutableAttributesFactory
 import org.gradle.api.internal.attributes.ImmutableAttributes
 import org.gradle.api.internal.attributes.ImmutableAttributesFactory
+import org.gradle.api.internal.attributes.immutable.ImmutableAttributesSchema
+import org.gradle.api.internal.attributes.immutable.ImmutableAttributesSchemaFactory
 
 class AttributeTestUtil {
     static ImmutableAttributesFactory attributesFactory() {
@@ -64,5 +69,33 @@ class AttributeTestUtil {
 
     static <T> T named(Class<T> clazz, String value) {
         TestUtil.objectInstantiator().named(clazz, value)
+    }
+
+    /**
+     * Creates a mutable attribute schema, configuring it with the provided action.
+     */
+    static AttributesSchemaInternal mutableSchema(@DelegatesTo(AttributesSchema) Closure<?> action = {}) {
+        def attributesSchema = new DefaultAttributesSchema(TestUtil.instantiatorFactory(), SnapshotTestUtil.isolatableFactory())
+
+        action.delegate = attributesSchema
+        action(attributesSchema)
+
+        return attributesSchema
+    }
+
+    /**
+     * Creates an immutable attribute schema, configuring it with the provided action.
+     */
+    static ImmutableAttributesSchema immutableSchema(@DelegatesTo(AttributesSchema) Closure<?> action = {}) {
+        def mutable = mutableSchema(action)
+        ImmutableAttributesSchemaFactory factory = new ImmutableAttributesSchemaFactory()
+        return factory.create(mutable)
+    }
+
+    /**
+     * Creates a service factory, used for creating attribute matchers and variant transformers.
+     */
+    static AttributeSchemaServiceFactory serviceFactory() {
+        new AttributeSchemaServiceFactory(attributesFactory(), new ImmutableAttributesSchemaFactory())
     }
 }

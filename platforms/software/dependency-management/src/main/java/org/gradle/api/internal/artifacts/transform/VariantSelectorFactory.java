@@ -16,9 +16,13 @@
 
 package org.gradle.api.internal.artifacts.transform;
 
+import org.gradle.api.internal.attributes.immutable.ImmutableAttributesSchema;
+
 public interface VariantSelectorFactory {
+
     /**
      * Returns a selector that selects using variant aware attribute matching.
      */
-    ArtifactVariantSelector create(TransformUpstreamDependenciesResolverFactory dependenciesResolverFactory);
+    ArtifactVariantSelector create(ImmutableAttributesSchema consumerSchema, TransformUpstreamDependenciesResolverFactory dependenciesResolverFactory);
+
 }

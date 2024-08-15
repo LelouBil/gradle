@@ -22,6 +22,8 @@ import org.gradle.api.attributes.Usage
 import org.gradle.api.internal.attributes.AttributeContainerInternal
 import org.gradle.api.internal.attributes.ImmutableAttributes
 import org.gradle.api.internal.attributes.ImmutableAttributesFactory
+import org.gradle.api.internal.attributes.matching.AttributeSelectionSchema
+import org.gradle.api.internal.attributes.matching.AttributeSelectionUtils
 import org.gradle.util.AttributeTestUtil
 import spock.lang.Specification
 

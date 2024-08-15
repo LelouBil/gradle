@@ -82,7 +82,6 @@ import org.gradle.api.internal.artifacts.repositories.ResolutionAwareRepository;
 import org.gradle.api.internal.artifacts.repositories.metadata.IvyMutableModuleMetadataFactory;
 import org.gradle.api.internal.artifacts.repositories.metadata.MavenMutableModuleMetadataFactory;
 import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransportFactory;
-import org.gradle.api.internal.artifacts.transform.ConsumerProvidedVariantFinder;
 import org.gradle.api.internal.artifacts.transform.DefaultTransformInvocationFactory;
 import org.gradle.api.internal.artifacts.transform.DefaultTransformRegistrationFactory;
 import org.gradle.api.internal.artifacts.transform.DefaultTransformedVariantFactory;
@@ -99,6 +98,7 @@ import org.gradle.api.internal.artifacts.transform.TransformRegistrationFactory;
 import org.gradle.api.internal.artifacts.transform.VariantSelectorFactory;
 import org.gradle.api.internal.artifacts.type.ArtifactTypeRegistry;
 import org.gradle.api.internal.artifacts.type.DefaultArtifactTypeRegistry;
+import org.gradle.api.internal.attributes.AttributeSchemaServiceFactory;
 import org.gradle.api.internal.attributes.AttributesSchemaInternal;
 import org.gradle.api.internal.attributes.AttributeDescriberRegistry;
 import org.gradle.api.internal.attributes.DefaultAttributesSchema;
@@ -224,7 +224,6 @@ public class DefaultDependencyManagementServices implements DependencyManagement
             registration.add(ResolutionStrategyFactory.class);
             registration.add(DefaultLocalComponentRegistry.class);
             registration.add(ProjectDependencyResolver.class);
-            registration.add(ConsumerProvidedVariantFinder.class);
             registration.add(DefaultVariantSelectorFactory.class);
             registration.add(DefaultConfigurationFactory.class);
             registration.add(DefaultComponentSelectorConverter.class);
@@ -547,8 +546,8 @@ public class DefaultDependencyManagementServices implements DependencyManagement
         }
 
         @Provides
-        GraphVariantSelector createGraphVariantSelector(ResolutionFailureHandler resolutionFailureHandler) {
-            return new GraphVariantSelector(resolutionFailureHandler);
+        GraphVariantSelector createGraphVariantSelector(AttributeSchemaServiceFactory attributeSchemaServices, ResolutionFailureHandler resolutionFailureHandler) {
+            return new GraphVariantSelector(attributeSchemaServices, resolutionFailureHandler);
         }
 
         @Provides
@@ -558,7 +557,6 @@ public class DefaultDependencyManagementServices implements DependencyManagement
             GlobalDependencyResolutionRules metadataHandler,
             ResolutionResultsStoreFactory resolutionResultsStoreFactory,
             StartParameter startParameter,
-            AttributesSchemaInternal attributesSchema,
             VariantSelectorFactory variantSelectorFactory,
             ImmutableModuleIdentifierFactory moduleIdentifierFactory,
             BuildOperationExecutor buildOperationExecutor,
@@ -585,7 +583,6 @@ public class DefaultDependencyManagementServices implements DependencyManagement
                 metadataHandler,
                 resolutionResultsStoreFactory,
                 startParameter,
-                attributesSchema,
                 variantSelectorFactory,
                 moduleIdentifierFactory,
                 buildOperationExecutor,

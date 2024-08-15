@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.internal.component.model;
+package org.gradle.api.internal.attributes.matching;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -24,6 +24,7 @@ import org.gradle.api.internal.attributes.AttributeContainerInternal;
 import org.gradle.api.internal.attributes.AttributeValue;
 import org.gradle.api.internal.attributes.ImmutableAttributes;
 import org.gradle.internal.Cast;
+import org.gradle.internal.component.model.AttributeMatchingExplanationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,13 +53,13 @@ public class DefaultAttributeMatcher implements AttributeMatcher {
      */
     private final ConcurrentMap<CachedQuery, int[]> cachedQueries = new ConcurrentHashMap<>();
 
+    /**
+     * Map of cached results of {@link #isMatchingCandidate(ImmutableAttributes, ImmutableAttributes)}.
+     */
+    private final ConcurrentHashMap<MatchingCacheKey, Boolean> matchingCache = new ConcurrentHashMap<>();
+
     public DefaultAttributeMatcher(AttributeSelectionSchema schema) {
         this.schema = schema;
-    }
-
-    @Override
-    public AttributeSelectionSchema getSelectionSchema() {
-        return schema;
     }
 
     @Override
@@ -68,7 +69,9 @@ public class DefaultAttributeMatcher implements AttributeMatcher {
 
     @Override
     public boolean isMatchingCandidate(ImmutableAttributes candidate, ImmutableAttributes requested) {
-        return allCommonAttributesSatisfy(candidate, requested, schema::matchValue);
+        return matchingCache.computeIfAbsent(new MatchingCacheKey(candidate, requested), key ->
+            allCommonAttributesSatisfy(candidate, requested, schema::matchValue)
+        );
     }
 
     @Override
@@ -130,6 +133,36 @@ public class DefaultAttributeMatcher implements AttributeMatcher {
         }
     }
 
+    private static class MatchingCacheKey {
+        private final ImmutableAttributes candidate;
+        private final ImmutableAttributes requested;
+        private final int hashCode;
+
+        public MatchingCacheKey(ImmutableAttributes candidate, ImmutableAttributes requested) {
+            this.candidate = candidate;
+            this.requested = requested;
+            this.hashCode = 31 * candidate.hashCode() + requested.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            MatchingCacheKey cacheKey = (MatchingCacheKey) o;
+            return candidate.equals(cacheKey.candidate) &&
+                requested.equals(cacheKey.requested);
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+    }
+
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public List<AttributeMatcher.MatchingDescription<?>> describeMatching(ImmutableAttributes candidate, ImmutableAttributes requested) {
@@ -137,14 +170,16 @@ public class DefaultAttributeMatcher implements AttributeMatcher {
             return Collections.emptyList();
         }
 
+        CoercingAttributeValuePredicate matches = schema::matchValue;
+
         ImmutableSet<Attribute<?>> attributes = requested.keySet();
         List<AttributeMatcher.MatchingDescription<?>> result = new ArrayList<>(attributes.size());
         for (Attribute<?> attribute : attributes) {
+            attribute = schema.tryRehydrate(attribute);
             AttributeValue<?> requestedValue = requested.findEntry(attribute);
             AttributeValue<?> candidateValue = candidate.findEntry(attribute.getName());
             if (candidateValue.isPresent()) {
-                Object coercedValue = candidateValue.coerce(attribute);
-                boolean match = schema.matchValue(attribute, requestedValue.get(), coercedValue);
+                boolean match = matches.test(attribute, requestedValue, candidateValue);
                 result.add(new AttributeMatcher.MatchingDescription(attribute, requestedValue, candidateValue, match));
             } else {
                 result.add(new AttributeMatcher.MatchingDescription(attribute, requestedValue, candidateValue, false));

@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-package org.gradle.platform;
-
-import org.gradle.api.Incubating;
-
 /**
- * Information about the machine host Gradle is running on.
- *
- * @since 7.6
+ * Classes for creating and working with immutable attribute schemas.
  */
-@Incubating
-public interface BuildPlatform {
+@NonNullApi
+package org.gradle.api.internal.attributes.immutable;
 
-    OperatingSystem getOperatingSystem();
-
-    Architecture getArchitecture();
-
-}
+import org.gradle.api.NonNullApi;
