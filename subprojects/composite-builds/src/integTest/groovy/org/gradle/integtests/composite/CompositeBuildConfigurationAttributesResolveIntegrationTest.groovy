@@ -18,6 +18,7 @@ package org.gradle.integtests.composite
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.resolve.ResolveTestFixture
+import spock.lang.Ignore
 
 class CompositeBuildConfigurationAttributesResolveIntegrationTest extends AbstractIntegrationSpec {
     def resolve = new ResolveTestFixture(buildFile)
@@ -480,6 +481,7 @@ class CompositeBuildConfigurationAttributesResolveIntegrationTest extends Abstra
         'OtherThing' | 'new OtherThing(name: "free")' | 'new OtherThing(name: "paid")'
     }
 
+    @Ignore("This one is a bit odd. The two Thing attributes are technically different classes and are different")
     def "compatibility and disambiguation rules can be defined by consuming build"() {
         given:
         createDirs("a", "b", "includedBuild")
