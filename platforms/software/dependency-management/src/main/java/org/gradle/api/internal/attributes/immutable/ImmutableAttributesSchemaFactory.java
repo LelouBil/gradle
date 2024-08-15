@@ -30,7 +30,6 @@ import org.gradle.internal.service.scopes.ServiceScope;
 
 import javax.inject.Inject;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -119,11 +118,20 @@ public class ImmutableAttributesSchemaFactory {
     private static class SchemaPair {
         private final ImmutableAttributesSchema consumer;
         private final ImmutableAttributesSchema producer;
+        private final int hashCode;
 
         SchemaPair(ImmutableAttributesSchema consumer, ImmutableAttributesSchema producer) {
             this.consumer = consumer;
             this.producer = producer;
+            this.hashCode = computeHashCode(consumer, producer);
         }
+
+        private static int computeHashCode(ImmutableAttributesSchema consumer, ImmutableAttributesSchema producer) {
+            int result = consumer.hashCode();
+            result = 31 * result + producer.hashCode();
+            return result;
+        }
+
 
         @Override
         public boolean equals(Object obj) {
@@ -140,7 +148,7 @@ public class ImmutableAttributesSchemaFactory {
 
         @Override
         public int hashCode() {
-            return Objects.hash(consumer, producer);
+            return hashCode;
         }
     }
 

@@ -52,7 +52,9 @@ public class ImmutableAttributesSchema {
     final ImmutableMap<Attribute<?>, ImmutableAttributeMatchingStrategy<?>> strategies;
     final ImmutableList<Attribute<?>> precedence;
 
+    // Computed values
     private final ImmutableMap<String, Attribute<?>> attributesByName;
+    private final int hashCode;
 
     // package-private to allow instantiation from ImmutableAttributesSchemaFactory
     ImmutableAttributesSchema(
@@ -63,6 +65,7 @@ public class ImmutableAttributesSchema {
         this.precedence = precedence;
 
         this.attributesByName = computeAttributesByName(strategies);
+        this.hashCode = computeHashCode(strategies, precedence);
     }
 
     private static ImmutableMap<String, Attribute<?>> computeAttributesByName(ImmutableMap<Attribute<?>, ?> strategies) {
@@ -74,6 +77,15 @@ public class ImmutableAttributesSchema {
         // TODO: In some cases, two attributes may be registered with the same name.
         // This is something we should probably forbid upstream.
         return attributesByName.buildKeepingLast();
+    }
+
+    private static int computeHashCode(
+        ImmutableMap<Attribute<?>, ?> strategies,
+        ImmutableList<Attribute<?>> precedence
+    ) {
+        int result = strategies.hashCode();
+        result = 31 * result + precedence.hashCode();
+        return result;
     }
 
     /**
@@ -142,7 +154,7 @@ public class ImmutableAttributesSchema {
 
     @Override
     public int hashCode() {
-        return Objects.hash(strategies, precedence);
+        return hashCode;
     }
 
     public static class ImmutableAttributeMatchingStrategy<T> {
