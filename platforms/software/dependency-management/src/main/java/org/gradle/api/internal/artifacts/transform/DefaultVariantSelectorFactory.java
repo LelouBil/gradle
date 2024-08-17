@@ -27,6 +27,7 @@ import javax.inject.Inject;
 public class DefaultVariantSelectorFactory implements VariantSelectorFactory {
     private final ImmutableAttributesFactory attributesFactory;
     private final AttributeSchemaServiceFactory attributeSchemaServices;
+    private final IsolatingTransformFinder transformFinder;
     private final TransformedVariantFactory transformedVariantFactory;
     private final ResolutionFailureHandler failureProcessor;
     private final VariantTransformRegistry transformRegistry;
@@ -35,12 +36,14 @@ public class DefaultVariantSelectorFactory implements VariantSelectorFactory {
     public DefaultVariantSelectorFactory(
         ImmutableAttributesFactory attributesFactory,
         AttributeSchemaServiceFactory attributeSchemaServices,
+        IsolatingTransformFinder transformFinder,
         TransformedVariantFactory transformedVariantFactory,
         ResolutionFailureHandler failureProcessor,
         VariantTransformRegistry transformRegistry
     ) {
         this.attributesFactory = attributesFactory;
         this.attributeSchemaServices = attributeSchemaServices;
+        this.transformFinder = transformFinder;
         this.transformedVariantFactory = transformedVariantFactory;
         this.failureProcessor = failureProcessor;
         this.transformRegistry = transformRegistry;
@@ -48,6 +51,6 @@ public class DefaultVariantSelectorFactory implements VariantSelectorFactory {
 
     @Override
     public ArtifactVariantSelector create(ImmutableAttributesSchema schema, TransformUpstreamDependenciesResolverFactory dependenciesResolverFactory) {
-        return new AttributeMatchingArtifactVariantSelector(transformRegistry, schema, attributesFactory, attributeSchemaServices, transformedVariantFactory, dependenciesResolverFactory, failureProcessor);
+        return new AttributeMatchingArtifactVariantSelector(transformRegistry, schema, attributesFactory, attributeSchemaServices, transformFinder, transformedVariantFactory, dependenciesResolverFactory, failureProcessor);
     }
 }
