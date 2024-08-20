@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.gradle.api.GradleException
 import org.gradle.api.internal.GradleInternal
+import org.gradle.api.internal.artifacts.transform.DefaultTransformUpstreamDependenciesResolver
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.internal.tasks.NodeExecutionContext
 import org.gradle.execution.plan.ActionNode
@@ -31,7 +32,6 @@ import org.gradle.execution.plan.Node
 import org.gradle.execution.plan.NodeGroup
 import org.gradle.execution.plan.OrdinalGroup
 import org.gradle.execution.plan.OrdinalGroupFactory
-import org.gradle.execution.plan.PostExecutionNodeAwareActionNode
 import org.gradle.execution.plan.ScheduledWork
 import org.gradle.execution.plan.TaskNode
 import org.gradle.internal.cc.base.serialize.ProjectProvider
@@ -300,16 +300,6 @@ class WorkNodeCodec(
                 writeSmallInt(nodeId)
                 safeRun {
                     write(node)
-                    if (node is ActionNode) {
-                        // could potentially trigger expensive computation, so even though this is not
-                        // related to node state, trigger it here to piggyback on parallel CC node store;
-                        // results are consumed later via postExecutionNodes
-                        val setupNodeAction = node.action?.preExecutionNode
-                        // Could probably add some abstraction for nodes that can be executed eagerly and discarded
-                        if (setupNodeAction is PostExecutionNodeAwareActionNode) {
-                            runPreExecutionAction(setupNodeAction)
-                        }
-                    }
                 }
                 if (node is LocalTaskNode) {
                     val prepareNodeId = nodeIds.getInt(node.prepareNode)
@@ -496,13 +486,18 @@ class WorkNodeCodec(
     }
 
     private
-    fun dependencySuccessorsOf(node: Node): MutableSet<Node> {
+    fun WriteContext.dependencySuccessorsOf(node: Node): MutableSet<Node> {
         var successors = node.dependencySuccessors
         if (node is ActionNode) {
-            val setupNodeAction = node.action?.preExecutionNode
+            val setupNode = node.action?.preExecutionNode
             // Could probably add some abstraction for nodes that can be executed eagerly and discarded
-            if (setupNodeAction is PostExecutionNodeAwareActionNode) {
-                successors = successors + setupNodeAction.postExecutionNodes
+            if (setupNode is DefaultTransformUpstreamDependenciesResolver.FinalizeTransformDependenciesFromSelectedArtifacts.CalculateFinalDependencies) {
+                setupNode.run(object : NodeExecutionContext {
+                    override fun <T : Any> getService(type: Class<T>): T {
+                        return ownerService(type)
+                    }
+                })
+                successors = successors + setupNode.postExecutionNodes
             }
         }
         return successors
@@ -547,15 +542,6 @@ class WorkNodeCodec(
                 operations().forEach { add(asBuildOperation(it.displayName, it.progressDisplayName, it.action)) }
             }
         }
-    }
-
-    private
-    fun WriteContext.runPreExecutionAction(setupNodeAction: PostExecutionNodeAwareActionNode) {
-        setupNodeAction.run(object : NodeExecutionContext {
-            override fun <T : Any> getService(type: Class<T>): T {
-                return ownerService(type)
-            }
-        })
     }
 }
 
