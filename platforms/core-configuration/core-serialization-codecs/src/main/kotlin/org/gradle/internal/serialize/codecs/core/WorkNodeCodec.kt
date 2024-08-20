@@ -300,9 +300,16 @@ class WorkNodeCodec(
                 writeSmallInt(nodeId)
                 safeRun {
                     write(node)
-                    // could potentially trigger expensive computation, so even though this is not
-                    // related to node state to be stored, trigger it here to piggyback on parallel CC node store
-                    discoverAdditionalDependencies(node)
+                    if (node is ActionNode) {
+                        // could potentially trigger expensive computation, so even though this is not
+                        // related to node state, trigger it here to piggyback on parallel CC node store;
+                        // results are consumed later via postExecutionNodes
+                        val setupNodeAction = node.action?.preExecutionNode
+                        // Could probably add some abstraction for nodes that can be executed eagerly and discarded
+                        if (setupNodeAction is PostExecutionNodeAwareActionNode) {
+                            runPreExecutionAction(setupNodeAction)
+                        }
+                    }
                 }
                 if (node is LocalTaskNode) {
                     val prepareNodeId = nodeIds.getInt(node.prepareNode)
@@ -490,8 +497,14 @@ class WorkNodeCodec(
 
     private
     fun dependencySuccessorsOf(node: Node): MutableSet<Node> {
-        val successors = node.dependencySuccessors.toMutableSet()
-        addDependencySuccessors(node, successors)
+        var successors = node.dependencySuccessors
+        if (node is ActionNode) {
+            val setupNodeAction = node.action?.preExecutionNode
+            // Could probably add some abstraction for nodes that can be executed eagerly and discarded
+            if (setupNodeAction is PostExecutionNodeAwareActionNode) {
+                successors = successors + setupNodeAction.postExecutionNodes
+            }
+        }
         return successors
     }
 
@@ -519,67 +532,30 @@ class WorkNodeCodec(
         }
     }
 
-    /**
-     * Attempts to find and execute a setup node action to discover additional dependencies.
-     *
-     * @see addDependencySuccessors
-     */
-    private
-    fun WriteContext.discoverAdditionalDependencies(node: Node) {
-        node.runPreExecutionNodeAction { setupNodeAction ->
-            /**
-             * Note that only actions that [PostExecutionNodeAwareActionNode.usesMutableProjectState]
-             * actually need exclusive access to mutable state for [PostExecutionNodeAwareActionNode.getOwningProject]
-             * (which is not necessarily the same for the original node).
-             */
-            setupNodeAction.run(object : NodeExecutionContext {
-                override fun <T : Any> getService(type: Class<T>): T {
-                    return ownerService(type)
-                }
-            })
-        }
-    }
-
-    /**
-     * If the given node is an action node, attempts to collect any
-     * [PostExecutionNodeAwareActionNode.getPostExecutionNodes] it may have produced
-     * when executed.
-     *
-     * @see discoverAdditionalDependencies
-     */
-    private
-    fun addDependencySuccessors(node: Node, successors: MutableSet<Node>) {
-        node.runPreExecutionNodeAction { setupNodeAction ->
-            successors.addAll(setupNodeAction.postExecutionNodes)
-        }
-    }
-
-    private
-    inline fun Node.runPreExecutionNodeAction(action: (PostExecutionNodeAwareActionNode) -> Unit) {
-        if (this is ActionNode) {
-            val setupNodeAction = this.action?.preExecutionNode
-            // Could probably add some abstraction for nodes that can be executed eagerly and discarded
-            if (setupNodeAction is PostExecutionNodeAwareActionNode) {
-                action(setupNodeAction)
-            }
-        }
-    }
-
     private
     fun IsolateContext.runBuildOperations(parallel: Boolean, message: String, operations: () -> Iterable<OperationInfo>) {
         if (!parallel) {
-            logger.debug("$message in-line")
+            logger.debug("${message} in-line")
             operations().forEach { it.action() }
             return
         }
 
-        logger.debug("$message in parallel")
+        logger.debug("${message} in parallel")
         val buildOperationExecutor = isolate.owner.serviceOf<BuildOperationExecutor>()
         unwrapBuildOperationExceptions(message) {
             buildOperationExecutor.runAllWithAccessToProjectState {
                 operations().forEach { add(asBuildOperation(it.displayName, it.progressDisplayName, it.action)) }
             }
         }
+    }
+
+    private
+    fun WriteContext.runPreExecutionAction(setupNodeAction: PostExecutionNodeAwareActionNode) {
+        setupNodeAction.run(object : NodeExecutionContext {
+            override fun <T : Any> getService(type: Class<T>): T {
+                return ownerService(type)
+            }
+        })
     }
 }
 
