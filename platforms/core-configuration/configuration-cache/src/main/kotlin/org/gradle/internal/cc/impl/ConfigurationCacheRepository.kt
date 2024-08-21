@@ -217,18 +217,6 @@ class ConfigurationCacheRepository(
     }
 
     private
-    fun includedBuildFileFor(parentStateFile: File, build: BuildDefinition) =
-        parentStateFile.run {
-            resolveSibling("$name.${build.name}")
-        }
-
-    private
-    fun relatedStateFileFor(parentStateFile: File, path: Path) =
-        parentStateFile.run {
-            resolveSibling("${path.segments().joinToString("_", "_")}.$name")
-        }
-
-    private
     val cleanupDepth = 1
 
     private
@@ -302,4 +290,11 @@ private
 fun includedBuildFileFor(parentStateFile: File, build: BuildDefinition) =
     parentStateFile.run {
         resolveSibling("$name.${build.name}")
+    }
+
+
+private
+fun relatedStateFileFor(parentStateFile: File, path: Path) =
+    parentStateFile.run {
+        resolveSibling("${path.segments().joinToString("_", "_")}.$name")
     }
