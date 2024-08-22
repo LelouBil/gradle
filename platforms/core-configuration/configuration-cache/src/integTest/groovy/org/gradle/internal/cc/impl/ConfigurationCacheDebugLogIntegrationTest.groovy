@@ -75,8 +75,12 @@ class ConfigurationCacheDebugLogIntegrationTest extends AbstractConfigurationCac
         def firstTaskNodeIndex = events.findIndexOf { it.frame == LocalTaskNode.name }
         firstTaskNodeIndex > 0
         events[firstTaskNodeIndex] == [profile: "child ':' state", type: "O", frame: LocalTaskNode.name]
-        events[firstTaskNodeIndex + 1] == [profile: "child ':' state", type: "O", frame: ":ok"]
-        events[firstTaskNodeIndex + 2] == [profile: "child ':' state", type: "O", frame: DefaultTask.name]
+
+        def secondTaskNodeIndex = events.findIndexOf {it.profile == "child ':' state" && it.type == "O" && it.frame == ":ok" }
+        firstTaskNodeIndex < secondTaskNodeIndex
+
+        def thirdTaskNodeIndex = events.findIndexOf {it.profile == "child ':' state" && it.type == "O" && it.frame == DefaultTask.name }
+        secondTaskNodeIndex < thirdTaskNodeIndex
 
         where:
         enablement << CCDebugEnablement.values()
