@@ -24,21 +24,16 @@ import org.gradle.api.internal.artifacts.ivyservice.resolveengine.graph.Dependen
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.graph.RootGraphNode;
 import org.gradle.api.internal.artifacts.type.ArtifactTypeRegistry;
 import org.gradle.api.internal.attributes.AttributesSchemaInternal;
-import org.gradle.internal.Cast;
-import org.gradle.internal.DisplayName;
 import org.gradle.internal.component.local.model.LocalFileDependencyMetadata;
 import org.gradle.internal.component.model.ComponentGraphResolveState;
 import org.gradle.internal.component.model.GraphVariantSelector;
 import org.gradle.internal.component.model.VariantGraphResolveState;
-import org.gradle.internal.model.CalculatedValueContainer;
 import org.gradle.internal.model.CalculatedValueContainerFactory;
-import org.gradle.internal.model.ValueCalculator;
 import org.gradle.internal.resolve.resolver.ArtifactResolver;
 import org.gradle.internal.resolve.resolver.DefaultVariantArtifactResolver;
 import org.gradle.internal.resolve.resolver.VariantArtifactResolver;
 
 import java.util.function.LongFunction;
-import java.util.function.Supplier;
 
 /**
  * Adapts a {@link DependencyArtifactsVisitor} to a {@link DependencyGraphVisitor}. Calculates the artifacts contributed by each edge in the graph and forwards the results to the artifact visitor.
@@ -106,7 +101,6 @@ public class ResolvedArtifactsGraphVisitor implements DependencyGraphVisitor {
     private ArtifactsForNode resolveVariantArtifacts(DependencyGraphEdge dependency, DependencyGraphNode toNode) {
         ComponentGraphResolveState component = toNode.getOwner().getResolveState();
         VariantGraphResolveState variant = toNode.getResolveState();
-        LazyComputationFactory variantResolution = getLazyComputation();
 
         // Do not share an ArtifactSet if the artifacts are modified by the dependency.
         if (!dependency.getDependencyMetadata().getArtifacts().isEmpty() ||
@@ -114,24 +108,13 @@ public class ResolvedArtifactsGraphVisitor implements DependencyGraphVisitor {
             dependency.getExclusions().mayExcludeArtifacts()
         ) {
             int id = nextId++;
-            return new ArtifactsForNode(id, new VariantResolvingArtifactSet(variantResolver, component, variant, dependency, graphVariantSelector, consumerSchema, variantResolution));
+            return new ArtifactsForNode(id, new VariantResolvingArtifactSet(variantResolver, component, variant, dependency, graphVariantSelector, consumerSchema, calculatedValueContainerFactory));
         }
 
         return artifactsByNodeId.computeIfAbsent(toNode.getNodeId(), (LongFunction<ArtifactsForNode>) value -> {
             int id = nextId++;
-            return new ArtifactsForNode(id, new VariantResolvingArtifactSet(variantResolver, component, variant, dependency, graphVariantSelector, consumerSchema, variantResolution));
+            return new ArtifactsForNode(id, new VariantResolvingArtifactSet(variantResolver, component, variant, dependency, graphVariantSelector, consumerSchema, calculatedValueContainerFactory));
         });
-    }
-
-    // Wraps calculated value container factory into a lazy computation factory for easier consumption
-    private LazyComputationFactory getLazyComputation() {
-        return new LazyComputationFactory() {
-            @Override
-            public <T> Supplier<T> asLazy(DisplayName displayName, Supplier<T> supplier) {
-                CalculatedValueContainer<Object, ValueCalculator<?>> container = calculatedValueContainerFactory.create(displayName, context -> supplier.get());
-                return () -> Cast.uncheckedNonnullCast(container.get());
-            }
-        };
     }
 
     private static class ArtifactsForNode {

@@ -36,18 +36,20 @@ import org.gradle.internal.component.model.IvyArtifactName;
 import org.gradle.internal.component.model.VariantArtifactResolveState;
 import org.gradle.internal.component.model.VariantGraphResolveState;
 import org.gradle.internal.component.model.VariantResolveMetadata;
+import org.gradle.internal.model.CalculatedValueContainer;
+import org.gradle.internal.model.CalculatedValueContainerFactory;
+import org.gradle.internal.model.ValueCalculator;
 import org.gradle.internal.resolve.resolver.VariantArtifactResolver;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 
 /**
  * An {@link ArtifactSet} representing the artifacts contributed by a single variant in a dependency
  * graph, in the context of the dependency referencing it.
  */
-class VariantResolvingArtifactSet implements ArtifactSet {
+public class VariantResolvingArtifactSet implements ArtifactSet {
 
     private final VariantArtifactResolver variantResolver;
     private final ComponentGraphResolveState component;
@@ -61,16 +63,16 @@ class VariantResolvingArtifactSet implements ArtifactSet {
     private final GraphVariantSelector graphVariantSelector;
     private final AttributesSchemaInternal consumerSchema;
 
-    private final Supplier<ImmutableList<ResolvedVariant>> ownArtifacts;
+    private final CalculatedValueContainer<ImmutableList<ResolvedVariant>, ValueCalculator<ImmutableList<ResolvedVariant>>> ownArtifacts;
 
-    VariantResolvingArtifactSet(
+    public VariantResolvingArtifactSet(
         VariantArtifactResolver variantResolver,
         ComponentGraphResolveState component,
         VariantGraphResolveState variant,
         DependencyGraphEdge dependency,
         GraphVariantSelector graphVariantSelector,
         AttributesSchemaInternal consumerSchema,
-        LazyComputationFactory lazyComputationFactory
+        CalculatedValueContainerFactory calculatedValueContainerFactory
     ) {
         this.variantResolver = variantResolver;
         this.component = component;
@@ -83,7 +85,9 @@ class VariantResolvingArtifactSet implements ArtifactSet {
         this.capabilities = dependency.getSelector().getRequested().getRequestedCapabilities();
         this.graphVariantSelector = graphVariantSelector;
         this.consumerSchema = consumerSchema;
-        this.ownArtifacts = lazyComputationFactory.asLazy(Describables.of("artifacts for component variant", variant.getName()), this::calculateOwnArtifacts);
+        this.ownArtifacts = calculatedValueContainerFactory.create(
+            Describables.of("artifacts for component variant"),
+            context -> calculateOwnArtifacts());
     }
 
     @Override
@@ -104,6 +108,7 @@ class VariantResolvingArtifactSet implements ArtifactSet {
             ImmutableList<ResolvedVariant> variants;
             try {
                 if (!spec.getSelectFromAllVariants()) {
+                    ownArtifacts.finalizeIfNotAlready();
                     variants = ownArtifacts.get();
                 } else {
                     variants = getArtifactVariantsForReselection(spec.getRequestAttributes());
