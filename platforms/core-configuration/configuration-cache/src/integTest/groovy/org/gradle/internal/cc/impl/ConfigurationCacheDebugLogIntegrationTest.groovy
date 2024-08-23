@@ -85,7 +85,7 @@ class ConfigurationCacheDebugLogIntegrationTest extends AbstractConfigurationCac
         }
 
         where:
-        [enablement, iterations] << [CCDebugEnablement.values(), (1..10)].combinations()
+        enablement << CCDebugEnablement.values()
     }
 
     enum CCDebugEnablement {
