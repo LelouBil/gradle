@@ -186,9 +186,9 @@ public abstract class ScalaDoc extends SourceTask {
     @TaskAction
     protected void generate() {
         ScalaDocOptions options = getScalaDocOptions();
-        if (!GUtil.isTrue(options.getDocTitle())) {
-            options.setDocTitle(getTitle().getOrNull());
-        }
+        String docTitle = !GUtil.isTrue(options.getDocTitle().getOrNull())
+            ? getTitle().getOrNull()
+            : options.getDocTitle().getOrNull();
 
         WorkQueue queue = getWorkerExecutor().processIsolation(worker -> {
             worker.getClasspath().from(getScalaClasspath());
@@ -212,22 +212,21 @@ public abstract class ScalaDoc extends SourceTask {
             } else {
                 parameters.getSources().from(getSource());
 
-                if (options.isDeprecation()) {
+                if (options.getDeprecation().get()) {
                     parameters.getOptions().add("-deprecation");
                 }
 
-                if (options.isUnchecked()) {
+                if (options.getUnchecked().get()) {
                     parameters.getOptions().add("-unchecked");
                 }
             }
 
-            String footer = options.getFooter();
+            String footer = options.getFooter().getOrNull();
             if (footer != null) {
                 parameters.getOptions().add("-doc-footer");
                 parameters.getOptions().add(footer);
             }
 
-            String docTitle = options.getDocTitle();
             if (docTitle != null) {
                 parameters.getOptions().add("-doc-title");
                 parameters.getOptions().add(docTitle);
@@ -239,10 +238,8 @@ public abstract class ScalaDoc extends SourceTask {
             // options.getHeader();
             // options.getWindowTitle();
 
-            List<String> additionalParameters = options.getAdditionalParameters();
-            if (additionalParameters != null) {
-                parameters.getOptions().addAll(additionalParameters);
-            }
+            List<String> additionalParameters = options.getAdditionalParameters().get();
+            parameters.getOptions().addAll(additionalParameters);
         });
     }
 
