@@ -75,18 +75,18 @@ class ConfigurationCacheStartParameter internal constructor(
     val isDeduplicatingStrings: Boolean = options.getInternalFlag("org.gradle.configuration-cache.internal.deduplicate-strings", true)
 
     /**
-     * Whether configuration should be stored/loaded in parallel.
+     * Whether configuration should be stored in parallel.
      *
      * The default is `true`.
      */
     val isParallelStore = options.getInternalFlag("org.gradle.configuration-cache.internal.parallel-store", true)
 
     /**
-     * Whether configuration should be stored/loaded in parallel.
+     * Whether configuration should be loaded in parallel.
      *
-     * The default is `true`.
+     * The default is `false`.
      */
-    val isParallelLoad = options.getInternalFlag("org.gradle.configuration-cache.internal.parallel-load", true)
+    val isParallelLoad = options.getInternalFlag("org.gradle.configuration-cache.internal.parallel-load", false)
 
     val gradleProperties: Map<String, Any?>
         get() = startParameter.projectProperties
