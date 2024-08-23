@@ -568,14 +568,15 @@ class WorkNodeCodec(
 
     private
     fun IsolateContext.runBuildOperations(parallel: Boolean, message: String, operations: () -> Iterable<OperationInfo>) {
-        logger.debug("$message in parallel")
         val buildOperationExecutor = isolate.owner.serviceOf<BuildOperationExecutor>()
         unwrapBuildOperationExceptions(message) {
             buildOperationExecutor.runAllWithAccessToProjectState {
                 if (parallel) {
+                    logger.debug("$message in parallel")
                     // each operation as a proper build operation
                     operations().forEach { add(asBuildOperation(it.displayName, it.progressDisplayName, it.action)) }
                 } else {
+                    logger.debug("$message in-line")
                     // all operations under a single build operation
                     add(asBuildOperation(message) {
                         operations().forEach { it.action() }
