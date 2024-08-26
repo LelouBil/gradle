@@ -87,7 +87,8 @@ public class VariantResolvingArtifactSet implements ArtifactSet {
         this.consumerSchema = consumerSchema;
         this.ownArtifacts = calculatedValueContainerFactory.create(
             Describables.of("artifacts for component variant"),
-            context -> calculateOwnArtifacts());
+            context -> calculateOwnArtifacts()
+        );
     }
 
     @Override
