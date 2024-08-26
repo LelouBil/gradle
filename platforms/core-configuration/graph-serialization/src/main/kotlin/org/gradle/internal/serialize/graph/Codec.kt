@@ -173,12 +173,6 @@ interface IsolateOwner {
 }
 
 
-interface IsolateContextSource {
-    fun readContextFor(baseContext: ReadContext, path: Path): CloseableReadContext
-    fun writeContextFor(baseContext: WriteContext, path: Path): CloseableWriteContext
-}
-
-
 inline fun <reified T> IsolateOwner.serviceOf() = service(T::class.java)
 
 
