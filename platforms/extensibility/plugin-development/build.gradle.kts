@@ -23,6 +23,7 @@ dependencies {
     api(projects.platformJvm)
     api(projects.problemsApi)
     api(projects.resources)
+    api(projects.serviceLookup)
     api(projects.toolchainsJvmShared)
     api(projects.workers)
 
@@ -31,7 +32,6 @@ dependencies {
     api(libs.jsr305)
     api(libs.inject)
 
-    implementation(projects.serviceLookup)
     implementation(projects.serviceProvider)
     implementation(projects.serviceRegistryBuilder)
     implementation(projects.buildOption)

@@ -804,8 +804,8 @@ public class BuildScopeServices implements ServiceRegistrationProvider {
     }
 
     @Provides
-    protected ModelDefaultsHandler createActionDefaultsHandler(SoftwareTypeRegistry softwareTypeRegistry, PluginScheme pluginScheme, Instantiator instantiator) {
-        return new ActionBasedModelDefaultsHandler(softwareTypeRegistry, pluginScheme.getInspectionScheme(), instantiator);
+    protected ModelDefaultsHandler createActionDefaultsHandler(SoftwareTypeRegistry softwareTypeRegistry, PluginScheme pluginScheme, Instantiator instantiator, ServiceRegistry internalServices) {
+        return new ActionBasedModelDefaultsHandler(softwareTypeRegistry, pluginScheme.getInspectionScheme(), instantiator, internalServices);
     }
 
     @Provides

@@ -18,7 +18,6 @@ package org.gradle.internal.execution.impl;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
-import org.gradle.api.problems.internal.AdditionalDataBuilderFactory;
 import org.gradle.api.problems.internal.InternalProblems;
 import org.gradle.api.problems.internal.Problem;
 import org.gradle.api.problems.internal.ProblemsProgressEventEmitterHolder;
@@ -53,19 +52,13 @@ public class DefaultWorkValidationContext implements WorkValidationContext {
     public TypeValidationContext forType(Class<?> type, boolean cacheable) {
         types.add(type);
         Supplier<Optional<PluginId>> pluginId = () -> typeOriginInspector.findPluginDefining(type);
-        return new ProblemRecordingTypeValidationContext(type, pluginId) {
+        return new ProblemRecordingTypeValidationContext(type, pluginId, getProblemsService().getAdditionalDataBuilderFactory()) {
             @Override
             protected void recordProblem(Problem problem) {
                 if (DefaultTypeValidationContext.onlyAffectsCacheableWork(problem.getDefinition().getId()) && !cacheable) {
                     return;
                 }
                 problems.add(problem);
-            }
-
-            @Override
-            @SuppressWarnings("OverridesJavaxInjectableMethod")
-            public AdditionalDataBuilderFactory getAdditionalDataBuilderFactory() {
-                return getProblemsService().getAdditionalDataBuilderFactory();
             }
         };
     }

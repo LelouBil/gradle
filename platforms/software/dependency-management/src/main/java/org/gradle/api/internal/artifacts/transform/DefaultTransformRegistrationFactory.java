@@ -27,6 +27,7 @@ import org.gradle.api.internal.attributes.ImmutableAttributes;
 import org.gradle.api.internal.file.FileCollectionFactory;
 import org.gradle.api.internal.file.FileLookup;
 import org.gradle.api.internal.tasks.properties.FileParameterUtils;
+import org.gradle.api.problems.internal.AdditionalDataBuilderFactory;
 import org.gradle.internal.execution.InputFingerprinter;
 import org.gradle.internal.fingerprint.DirectorySensitivity;
 import org.gradle.internal.fingerprint.FileNormalizer;
@@ -101,7 +102,7 @@ public class DefaultTransformRegistrationFactory implements TransformRegistratio
         TypeMetadata actionMetadata = actionMetadataStore.getTypeMetadata(implementation);
         boolean cacheable = implementation.isAnnotationPresent(CacheableTransform.class);
         Instantiator instantiator = (Instantiator) internalServices.get(Instantiator.class);
-        DefaultTypeValidationContext validationContext = instantiator.newInstance(DefaultTypeValidationContext.class, null, cacheable);
+        DefaultTypeValidationContext validationContext = instantiator.newInstance(DefaultTypeValidationContext.class, null, cacheable, internalServices.get(AdditionalDataBuilderFactory.class));
         actionMetadata.visitValidationFailures(null, validationContext);
 
         // Should retain this on the metadata rather than calculate on each invocation

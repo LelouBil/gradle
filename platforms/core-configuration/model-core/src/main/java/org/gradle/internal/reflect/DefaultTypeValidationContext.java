@@ -19,6 +19,7 @@ package org.gradle.internal.reflect;
 import com.google.common.collect.ImmutableList;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.problems.ProblemId;
+import org.gradle.api.problems.internal.AdditionalDataBuilderFactory;
 import org.gradle.api.problems.internal.DefaultProblemId;
 import org.gradle.api.problems.internal.GradleCoreProblemGroup;
 import org.gradle.api.problems.internal.Problem;
@@ -37,8 +38,8 @@ public abstract class DefaultTypeValidationContext extends ProblemRecordingTypeV
     private final boolean reportCacheabilityProblems;
     private final ImmutableList.Builder<Problem> problems = ImmutableList.builder();
 
-    public DefaultTypeValidationContext(@Nullable Class<?> rootType, boolean reportCacheabilityProblems) {
-        super(rootType, Optional::empty);
+    public DefaultTypeValidationContext(@Nullable Class<?> rootType, boolean reportCacheabilityProblems, AdditionalDataBuilderFactory additionalDataBuilderFactory) {
+        super(rootType, Optional::empty, additionalDataBuilderFactory);
         this.reportCacheabilityProblems = reportCacheabilityProblems;
     }
 

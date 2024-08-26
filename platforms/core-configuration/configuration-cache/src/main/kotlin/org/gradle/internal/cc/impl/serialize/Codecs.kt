@@ -171,7 +171,7 @@ class Codecs(
     documentationRegistry: DocumentationRegistry,
     val javaSerializationEncodingLookup: JavaSerializationEncodingLookup,
     flowProviders: FlowProviders,
-    transformStepNodeFactory: TransformStepNodeFactory
+    transformStepNodeFactory: TransformStepNodeFactory,
 ) {
     private
     val userTypesBindings: Bindings

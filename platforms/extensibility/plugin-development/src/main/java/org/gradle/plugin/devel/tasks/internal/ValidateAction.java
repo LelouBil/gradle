@@ -30,12 +30,14 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.problems.ProblemSpec;
+import org.gradle.api.problems.internal.AdditionalDataBuilderFactory;
 import org.gradle.api.problems.internal.GradleCoreProblemGroup;
 import org.gradle.api.problems.internal.Problem;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.UntrackedTask;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.model.internal.asm.AsmConstants;
 import org.gradle.internal.reflect.DefaultTypeValidationContext;
 import org.gradle.util.internal.TextUtil;
@@ -72,13 +74,16 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
     @Inject
     public abstract Instantiator getInstantiator();
 
+    @Inject
+    public abstract ServiceRegistry getInternalServices();
+
     @Override
     public void execute() {
         List<Problem> taskValidationProblems = new ArrayList<>();
 
         Params params = getParameters();
 
-        params.getClasses().getAsFileTree().visit(new ValidationProblemCollector(taskValidationProblems, params, getInstantiator()));
+        params.getClasses().getAsFileTree().visit(new ValidationProblemCollector(taskValidationProblems, params, getInstantiator(), getInternalServices()));
         storeResults(taskValidationProblems, params.getOutputFile());
     }
 
@@ -118,12 +123,14 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
         private final List<Problem> taskValidationProblems;
         private final Params params;
         private final Instantiator instantiator;
+        private final ServiceRegistry internalServices;
 
-        public ValidationProblemCollector(List<Problem> taskValidationProblems, Params params, Instantiator instantiator) {
+        public ValidationProblemCollector(List<Problem> taskValidationProblems, Params params, Instantiator instantiator, ServiceRegistry internalServices) {
             this.classLoader = Thread.currentThread().getContextClassLoader();
             this.taskValidationProblems = taskValidationProblems;
             this.params = params;
             this.instantiator = instantiator;
+            this.internalServices = internalServices;
         }
 
         @Override
@@ -171,7 +178,7 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
         }
 
         private DefaultTypeValidationContext createValidationContext(Class<?> topLevelBean, boolean reportCacheabilityProblems) {
-            return instantiator.newInstance(DefaultTypeValidationContext.class, topLevelBean, reportCacheabilityProblems);
+            return instantiator.newInstance(DefaultTypeValidationContext.class, topLevelBean, reportCacheabilityProblems, internalServices.get(AdditionalDataBuilderFactory.class));
         }
 
         private void validateCacheabilityAnnotationPresent(Class<?> topLevelBean, boolean cacheable, Class<? extends Annotation> cacheableAnnotationClass, DefaultTypeValidationContext validationContext) {
