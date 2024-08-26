@@ -401,8 +401,7 @@ class DefaultConfigurationCacheIO internal constructor(
             documentationRegistry = service(),
             javaSerializationEncodingLookup = service(),
             flowProviders = service(),
-            transformStepNodeFactory = service(),
-            additionalDataBuilderFactory = service(),
+            transformStepNodeFactory = service()
         )
 
     private

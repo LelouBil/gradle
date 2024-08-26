@@ -26,7 +26,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Map;
 
-@ServiceScope(Scope.Build.class)
+@ServiceScope(Scope.Settings.class)
 public class AdditionalDataBuilderFactory {
 
     public static String getSupportedTypes() {
