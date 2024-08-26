@@ -94,7 +94,7 @@ public class DefaultProblemBuilder implements InternalProblemBuilder {
         }
 
         ProblemDefinition problemDefinition = new DefaultProblemDefinition(id, getSeverity(), docLink);
-        return new DefaultProblem(problemDefinition, contextualLabel, solutions, locations.build(), details, exceptionForProblemInstantiation, additionalData, additionalDataBuilderFactory);
+        return new DefaultProblem(problemDefinition, contextualLabel, solutions, locations.build(), details, exceptionForProblemInstantiation, additionalData);
     }
 
     private void addLocationsFromProblemStream(ImmutableList.Builder<ProblemLocation> locations, RuntimeException exceptionForProblemInstantiation) {
@@ -134,8 +134,7 @@ public class DefaultProblemBuilder implements InternalProblemBuilder {
             problemLocations.build(),
             null,
             exceptionForProblemInstantiation,
-            null,
-            additionalDataBuilderFactory);
+            null);
     }
 
     public RuntimeException getExceptionForProblemInstantiation() {
@@ -270,6 +269,11 @@ public class DefaultProblemBuilder implements InternalProblemBuilder {
     public InternalProblemBuilder withException(RuntimeException e) {
         this.exception = e;
         return this;
+    }
+
+    @Override
+    public AdditionalDataBuilderFactory getAdditionalDataBuilderFactory() {
+        return additionalDataBuilderFactory;
     }
 
     @Nullable

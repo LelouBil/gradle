@@ -59,6 +59,7 @@ import static org.gradle.internal.deprecation.Documentation.userManual;
 
 public abstract class ValidateAction implements WorkAction<ValidateAction.Params> {
     private final static Logger LOGGER = Logging.getLogger(ValidateAction.class);
+
     public interface Params extends WorkParameters {
         ConfigurableFileCollection getClasses();
 
@@ -77,7 +78,7 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
 
         Params params = getParameters();
 
-        params.getClasses().getAsFileTree().visit(new ValidationProblemCollector(taskValidationProblems, params, getAdditionalDataBuilderFactory()));
+        params.getClasses().getAsFileTree().visit(new ValidationProblemCollector(taskValidationProblems, params));
         storeResults(taskValidationProblems, params.getOutputFile());
     }
 
@@ -112,17 +113,15 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
         }
     }
 
-    private static class ValidationProblemCollector extends EmptyFileVisitor {
+    private class ValidationProblemCollector extends EmptyFileVisitor {
         private final ClassLoader classLoader;
         private final List<Problem> taskValidationProblems;
         private final Params params;
-        private final AdditionalDataBuilderFactory additionalDataBuilderFactory;
 
-        public ValidationProblemCollector(List<Problem> taskValidationProblems, Params params, AdditionalDataBuilderFactory additionalDataBuilderFactory) {
+        public ValidationProblemCollector(List<Problem> taskValidationProblems, Params params) {
             this.classLoader = Thread.currentThread().getContextClassLoader();
             this.taskValidationProblems = taskValidationProblems;
             this.params = params;
-            this.additionalDataBuilderFactory = additionalDataBuilderFactory;
         }
 
         @Override
@@ -170,10 +169,10 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
         }
 
         private DefaultTypeValidationContext createValidationContext(Class<?> topLevelBean, boolean reportCacheabilityProblems) {
-            return DefaultTypeValidationContext.withRootType(topLevelBean, reportCacheabilityProblems, additionalDataBuilderFactory);
+            return DefaultTypeValidationContext.withRootType(topLevelBean, reportCacheabilityProblems, getAdditionalDataBuilderFactory());
         }
 
-        private static void validateCacheabilityAnnotationPresent(Class<?> topLevelBean, boolean cacheable, Class<? extends Annotation> cacheableAnnotationClass, DefaultTypeValidationContext validationContext) {
+        private void validateCacheabilityAnnotationPresent(Class<?> topLevelBean, boolean cacheable, Class<? extends Annotation> cacheableAnnotationClass, DefaultTypeValidationContext validationContext) {
             if (topLevelBean.isInterface()) {
                 // Won't validate interfaces
                 return;
@@ -205,14 +204,14 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
             }
         }
 
-        private static List<String> getClassNames(FileVisitDetails fileDetails) {
+        private List<String> getClassNames(FileVisitDetails fileDetails) {
             ClassReader reader = createClassReader(fileDetails);
             List<String> classNames = new ArrayList<>();
             reader.accept(new TaskNameCollectorVisitor(classNames), ClassReader.SKIP_CODE);
             return classNames;
         }
 
-        private static ClassReader createClassReader(FileVisitDetails fileDetails) {
+        private ClassReader createClassReader(FileVisitDetails fileDetails) {
             try {
                 return new ClassReader(Files.asByteSource(fileDetails.getFile()).read());
             } catch (IOException e) {

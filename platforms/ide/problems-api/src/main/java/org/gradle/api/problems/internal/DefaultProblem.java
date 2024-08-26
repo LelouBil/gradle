@@ -32,7 +32,6 @@ public class DefaultProblem implements Serializable, Problem {
     private final String details;
     private final RuntimeException exception;
     private final AdditionalData additionalData;
-    private final AdditionalDataBuilderFactory additionalDataFactory;
 
     protected DefaultProblem(
         ProblemDefinition problemDefinition,
@@ -41,8 +40,7 @@ public class DefaultProblem implements Serializable, Problem {
         List<ProblemLocation> problemLocations,
         @Nullable String details,
         RuntimeException exception,
-        @Nullable AdditionalData additionalData,
-        AdditionalDataBuilderFactory additionalDataFactory
+        @Nullable AdditionalData additionalData
     ) {
         this.problemDefinition = problemDefinition;
         this.contextualLabel = contextualLabel;
@@ -51,7 +49,6 @@ public class DefaultProblem implements Serializable, Problem {
         this.details = details;
         this.exception = exception;
         this.additionalData = additionalData;
-        this.additionalDataFactory = additionalDataFactory;
     }
 
     @Override
@@ -93,8 +90,8 @@ public class DefaultProblem implements Serializable, Problem {
     }
 
     @Override
-    public InternalProblemBuilder toBuilder() {
-        return new DefaultProblemBuilder(this, additionalDataFactory);
+    public InternalProblemBuilder toBuilder(AdditionalDataBuilderFactory additionalDataBuilderFactory) {
+        return new DefaultProblemBuilder(this, additionalDataBuilderFactory);
     }
 
     private static boolean equals(@Nullable Object a, @Nullable Object b) {
