@@ -26,6 +26,7 @@ import org.gradle.api.internal.plugins.software.SoftwareType;
 import org.gradle.api.internal.tasks.properties.InspectionScheme;
 import org.gradle.api.internal.plugins.software.RegistersSoftwareTypes;
 import org.gradle.api.problems.Severity;
+import org.gradle.api.problems.internal.AdditionalDataBuilderFactory;
 import org.gradle.api.problems.internal.GradleCoreProblemGroup;
 import org.gradle.configuration.ConfigurationTargetIdentifier;
 import org.gradle.internal.Cast;
@@ -51,11 +52,13 @@ public class SoftwareTypeRegistrationPluginTarget implements PluginTarget {
     private final PluginTarget delegate;
     private final SoftwareTypeRegistry softwareTypeRegistry;
     private final InspectionScheme inspectionScheme;
+    private final AdditionalDataBuilderFactory additionalDataBuilderFactory;
 
-    public SoftwareTypeRegistrationPluginTarget(PluginTarget delegate, SoftwareTypeRegistry softwareTypeRegistry, InspectionScheme inspectionScheme) {
+    public SoftwareTypeRegistrationPluginTarget(PluginTarget delegate, SoftwareTypeRegistry softwareTypeRegistry, InspectionScheme inspectionScheme, AdditionalDataBuilderFactory additionalDataBuilderFactory) {
         this.delegate = delegate;
         this.softwareTypeRegistry = softwareTypeRegistry;
         this.inspectionScheme = inspectionScheme;
+        this.additionalDataBuilderFactory = additionalDataBuilderFactory;
     }
 
     @Override
@@ -99,7 +102,7 @@ public class SoftwareTypeRegistrationPluginTarget implements PluginTarget {
     }
 
     void validateSoftwareTypePluginExposesExactlyOneSoftwareType(Class<? extends Plugin<Project>> softwareTypePluginImplClass, Class<?> registeringPlugin) {
-        DefaultTypeValidationContext typeValidationContext = DefaultTypeValidationContext.withRootType(softwareTypePluginImplClass, false);
+        DefaultTypeValidationContext typeValidationContext = DefaultTypeValidationContext.withRootType(softwareTypePluginImplClass, false, additionalDataBuilderFactory);
         TypeToken<?> softwareTypePluginImplType = TypeToken.of(softwareTypePluginImplClass);
         TypeMetadata softwareTypePluginImplMetadata = inspectionScheme.getMetadataStore().getTypeMetadata(softwareTypePluginImplType.getRawType());
         softwareTypePluginImplMetadata.visitValidationFailures(null, typeValidationContext);

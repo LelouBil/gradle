@@ -30,6 +30,7 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.problems.ProblemSpec;
+import org.gradle.api.problems.internal.AdditionalDataBuilderFactory;
 import org.gradle.api.problems.internal.GradleCoreProblemGroup;
 import org.gradle.api.problems.internal.Problem;
 import org.gradle.api.provider.Property;
@@ -45,6 +46,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -66,13 +68,16 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
 
     }
 
+    @Inject
+    public abstract AdditionalDataBuilderFactory getAdditionalDataBuilderFactory();
+
     @Override
     public void execute() {
         List<Problem> taskValidationProblems = new ArrayList<>();
 
         Params params = getParameters();
 
-        params.getClasses().getAsFileTree().visit(new ValidationProblemCollector(taskValidationProblems, params));
+        params.getClasses().getAsFileTree().visit(new ValidationProblemCollector(taskValidationProblems, params, getAdditionalDataBuilderFactory()));
         storeResults(taskValidationProblems, params.getOutputFile());
     }
 
@@ -111,11 +116,13 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
         private final ClassLoader classLoader;
         private final List<Problem> taskValidationProblems;
         private final Params params;
+        private final AdditionalDataBuilderFactory additionalDataBuilderFactory;
 
-        public ValidationProblemCollector(List<Problem> taskValidationProblems, Params params) {
+        public ValidationProblemCollector(List<Problem> taskValidationProblems, Params params, AdditionalDataBuilderFactory additionalDataBuilderFactory) {
             this.classLoader = Thread.currentThread().getContextClassLoader();
             this.taskValidationProblems = taskValidationProblems;
             this.params = params;
+            this.additionalDataBuilderFactory = additionalDataBuilderFactory;
         }
 
         @Override
@@ -135,14 +142,15 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
                 collectValidationProblems(clazz, taskValidationProblems, params.getEnableStricterValidation().get());
             }
         }
-        private static void collectValidationProblems(Class<?> topLevelBean, List<Problem> problems, boolean enableStricterValidation) {
+
+        private void collectValidationProblems(Class<?> topLevelBean, List<Problem> problems, boolean enableStricterValidation) {
             DefaultTypeValidationContext validationContext = createTypeValidationContext(topLevelBean, enableStricterValidation);
             PropertyValidationAccess.collectValidationProblems(topLevelBean, validationContext);
 
             problems.addAll(validationContext.getProblems());
         }
 
-        private static DefaultTypeValidationContext createTypeValidationContext(Class<?> topLevelBean, boolean enableStricterValidation) {
+        private DefaultTypeValidationContext createTypeValidationContext(Class<?> topLevelBean, boolean enableStricterValidation) {
             if (Task.class.isAssignableFrom(topLevelBean)) {
                 return createValidationContextAndValidateCacheableAnnotations(topLevelBean, CacheableTask.class, enableStricterValidation);
             }
@@ -152,7 +160,7 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
             return createValidationContext(topLevelBean, enableStricterValidation);
         }
 
-        private static DefaultTypeValidationContext createValidationContextAndValidateCacheableAnnotations(Class<?> topLevelBean, Class<? extends Annotation> cacheableAnnotationClass, boolean enableStricterValidation) {
+        private DefaultTypeValidationContext createValidationContextAndValidateCacheableAnnotations(Class<?> topLevelBean, Class<? extends Annotation> cacheableAnnotationClass, boolean enableStricterValidation) {
             boolean cacheable = topLevelBean.isAnnotationPresent(cacheableAnnotationClass);
             DefaultTypeValidationContext validationContext = createValidationContext(topLevelBean, cacheable || enableStricterValidation);
             if (enableStricterValidation) {
@@ -161,8 +169,8 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
             return validationContext;
         }
 
-        private static DefaultTypeValidationContext createValidationContext(Class<?> topLevelBean, boolean reportCacheabilityProblems) {
-            return DefaultTypeValidationContext.withRootType(topLevelBean, reportCacheabilityProblems);
+        private DefaultTypeValidationContext createValidationContext(Class<?> topLevelBean, boolean reportCacheabilityProblems) {
+            return DefaultTypeValidationContext.withRootType(topLevelBean, reportCacheabilityProblems, additionalDataBuilderFactory);
         }
 
         private static void validateCacheabilityAnnotationPresent(Class<?> topLevelBean, boolean cacheable, Class<? extends Annotation> cacheableAnnotationClass, DefaultTypeValidationContext validationContext) {

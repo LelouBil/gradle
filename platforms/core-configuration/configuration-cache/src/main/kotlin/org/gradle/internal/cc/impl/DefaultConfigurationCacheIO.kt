@@ -402,6 +402,7 @@ class DefaultConfigurationCacheIO internal constructor(
             javaSerializationEncodingLookup = service(),
             flowProviders = service(),
             transformStepNodeFactory = service(),
+            additionalDataBuilderFactory = service(),
         )
 
     private

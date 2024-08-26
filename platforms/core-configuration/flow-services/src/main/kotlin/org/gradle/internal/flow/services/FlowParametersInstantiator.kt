@@ -22,6 +22,7 @@ import org.gradle.api.internal.tasks.AbstractTaskDependencyResolveContext
 import org.gradle.api.internal.tasks.properties.InspectionSchemeFactory
 import org.gradle.api.problems.Problems
 import org.gradle.api.problems.Severity
+import org.gradle.api.problems.internal.AdditionalDataBuilderFactory
 import org.gradle.api.problems.internal.GradleCoreProblemGroup
 import org.gradle.api.problems.internal.InternalProblemReporter
 import org.gradle.api.problems.internal.InternalProblems
@@ -45,7 +46,8 @@ internal
 class FlowParametersInstantiator(
     inspectionSchemeFactory: InspectionSchemeFactory,
     instantiatorFactory: InstantiatorFactory,
-    services: ServiceRegistry
+    services: ServiceRegistry,
+    val additionalDataBuilderFactory: AdditionalDataBuilderFactory
 ) {
     fun <P : FlowParameters> newInstance(parametersType: Class<P>, configure: (P) -> Unit): P {
         return instantiator.newInstance(parametersType).also {
@@ -59,7 +61,7 @@ class FlowParametersInstantiator(
         val problems = ImmutableList.builder<Problem>()
         inspection.propertyWalker.visitProperties(
             parameters,
-            object : ProblemRecordingTypeValidationContext(type, { Optional.empty() }) {
+            object : ProblemRecordingTypeValidationContext(type, { Optional.empty() }, additionalDataBuilderFactory) {
                 override fun recordProblem(problem: Problem) {
                     problems.add(problem)
                 }

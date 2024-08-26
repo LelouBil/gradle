@@ -36,6 +36,7 @@ dependencies {
     api(projects.hashing)
     api(projects.logging)
     api(projects.modelCore)
+    api(projects.problemsApi)
     api(projects.snapshots)
 
     api(libs.kotlinStdlib)
