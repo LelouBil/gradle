@@ -301,7 +301,7 @@ public class DefaultTransform implements Transform {
         boolean cacheable,
         Instantiator instantiator
     ) {
-        DefaultTypeValidationContext validationContext = instantiator.newInstance(DefaultTypeValidationContext.class, cacheable, null);
+        DefaultTypeValidationContext validationContext = instantiator.newInstance(DefaultTypeValidationContext.class, null, cacheable);
         InputFingerprinter.Result result = inputFingerprinter.fingerprintInputProperties(
             ImmutableSortedMap.of(),
             ImmutableSortedMap.of(),
