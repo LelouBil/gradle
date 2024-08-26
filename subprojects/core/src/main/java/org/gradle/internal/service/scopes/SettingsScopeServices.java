@@ -35,7 +35,6 @@ import org.gradle.api.internal.plugins.PluginTarget;
 import org.gradle.api.internal.plugins.PluginTargetType;
 import org.gradle.api.internal.plugins.SoftwareTypeRegistrationPluginTarget;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.api.problems.internal.AdditionalDataBuilderFactory;
 import org.gradle.api.problems.internal.InternalProblems;
 import org.gradle.cache.internal.LegacyCacheCleanupEnablement;
 import org.gradle.configuration.ConfigurationTargetIdentifier;
@@ -136,10 +135,5 @@ public class SettingsScopeServices implements ServiceRegistrationProvider {
             persistentCacheConfigurations.setCleanupHasBeenConfigured(false);
         }
         return cacheConfigurations;
-    }
-
-    @Provides
-    protected AdditionalDataBuilderFactory createAdditionalDataBuilderFactory() {
-        return new AdditionalDataBuilderFactory();
     }
 }
