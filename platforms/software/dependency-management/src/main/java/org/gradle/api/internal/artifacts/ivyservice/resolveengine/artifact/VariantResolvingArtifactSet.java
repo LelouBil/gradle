@@ -36,9 +36,8 @@ import org.gradle.internal.component.model.IvyArtifactName;
 import org.gradle.internal.component.model.VariantArtifactResolveState;
 import org.gradle.internal.component.model.VariantGraphResolveState;
 import org.gradle.internal.component.model.VariantResolveMetadata;
-import org.gradle.internal.model.CalculatedValueContainer;
+import org.gradle.internal.model.CalculatedValue;
 import org.gradle.internal.model.CalculatedValueContainerFactory;
-import org.gradle.internal.model.ValueCalculator;
 import org.gradle.internal.resolve.resolver.VariantArtifactResolver;
 
 import java.util.Collections;
