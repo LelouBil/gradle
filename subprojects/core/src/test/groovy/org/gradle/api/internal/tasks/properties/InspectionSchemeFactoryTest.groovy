@@ -18,12 +18,14 @@ package org.gradle.api.internal.tasks.properties
 
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.internal.DocumentationRegistry
+import org.gradle.api.problems.internal.AdditionalDataBuilderFactory
 import org.gradle.api.provider.Property
 import org.gradle.cache.internal.TestCrossBuildInMemoryCacheFactory
 import org.gradle.internal.instantiation.InstantiationScheme
 import org.gradle.internal.properties.annotations.PropertyAnnotationHandler
 import org.gradle.internal.reflect.DefaultTypeValidationContext
 import org.gradle.internal.reflect.annotations.impl.DefaultTypeAnnotationMetadataStore
+import org.gradle.util.TestUtil
 import spock.lang.Specification
 
 import javax.inject.Inject
@@ -63,7 +65,7 @@ class InspectionSchemeFactoryTest extends Specification {
         metadata.propertiesMetadata.size() == 2
 
         when:
-        def validationContext = DefaultTypeValidationContext.withoutRootType(false)
+        def validationContext = TestUtil.instantiatorFactory().inject().newInstance(DefaultTypeValidationContext.class, Object.class, false, Stub(AdditionalDataBuilderFactory.class))
         metadata.visitValidationFailures(null, validationContext)
 
         then:
@@ -89,7 +91,7 @@ class InspectionSchemeFactoryTest extends Specification {
         metadata.propertiesMetadata.size() == 2
 
         when:
-        def validationContext = DefaultTypeValidationContext.withoutRootType(false)
+        def validationContext = TestUtil.instantiatorFactory().inject().newInstance(DefaultTypeValidationContext.class, Object.class, false, Stub(AdditionalDataBuilderFactory.class))
         metadata.visitValidationFailures(null, validationContext)
 
         then:

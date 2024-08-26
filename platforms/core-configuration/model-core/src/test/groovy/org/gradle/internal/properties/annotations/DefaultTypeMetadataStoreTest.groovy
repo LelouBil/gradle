@@ -22,7 +22,6 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.AbstractTask
 import org.gradle.api.internal.ConventionTask
-import org.gradle.api.internal.DocumentationRegistry
 import org.gradle.api.internal.DynamicObjectAware
 import org.gradle.api.internal.HasConvention
 import org.gradle.api.internal.IConventionAware
@@ -30,6 +29,7 @@ import org.gradle.api.internal.tasks.properties.DefaultPropertyTypeResolver
 import org.gradle.api.model.ReplacedBy
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.problems.Severity
+import org.gradle.api.problems.internal.AdditionalDataBuilderFactory
 import org.gradle.api.problems.internal.GradleCoreProblemGroup
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Classpath
@@ -56,6 +56,7 @@ import org.gradle.internal.reflect.validation.ValidationMessageChecker
 import org.gradle.internal.scripts.ScriptOrigin
 import org.gradle.internal.service.ServiceRegistryBuilder
 import org.gradle.internal.service.scopes.ExecutionGlobalServices
+import org.gradle.util.TestUtil
 import spock.lang.Issue
 import spock.lang.Shared
 import spock.lang.Specification
@@ -69,8 +70,6 @@ import static org.gradle.internal.reflect.validation.TypeValidationProblemRender
 import static org.gradle.util.internal.TextUtil.normaliseLineSeparators
 
 class DefaultTypeMetadataStoreTest extends Specification implements ValidationMessageChecker {
-    static final DocumentationRegistry DOCUMENTATION_REGISTRY = new DocumentationRegistry()
-
     static final PROCESSED_PROPERTY_TYPE_ANNOTATIONS = [
         Input, InputFile, InputFiles, InputDirectory, Nested, OutputFile, OutputDirectory, OutputFiles, OutputDirectories, Destroys, LocalState
     ]
@@ -452,7 +451,7 @@ class DefaultTypeMetadataStoreTest extends Specification implements ValidationMe
     }
 
     private List<String> collectProblems(TypeMetadata metadata) {
-        def validationContext = DefaultTypeValidationContext.withoutRootType(false)
+        def validationContext = TestUtil.instantiatorFactory().inject().newInstance(DefaultTypeValidationContext.class, Object.class, false, Stub(AdditionalDataBuilderFactory.class))
         metadata.visitValidationFailures(null, validationContext)
         return validationContext.problems.collect { normaliseLineSeparators(renderMinimalInformationAbout(it)) }
     }

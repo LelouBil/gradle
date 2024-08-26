@@ -27,18 +27,21 @@ import org.gradle.internal.exceptions.DefaultMultiCauseException;
 import org.gradle.internal.reflect.validation.TypeValidationProblemRenderer;
 import org.gradle.model.internal.type.ModelType;
 
-import javax.annotation.Nullable;
+import javax.inject.Inject;
 import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
+@SuppressWarnings("MoreThanOneInjectableConstructor")
 public abstract class DefaultTypeValidationContext extends ProblemRecordingTypeValidationContext {
 
     public static final String MISSING_NORMALIZATION_ANNOTATION = "MISSING_NORMALIZATION_ANNOTATION";
     private final boolean reportCacheabilityProblems;
     private final ImmutableList.Builder<Problem> problems = ImmutableList.builder();
 
-    public DefaultTypeValidationContext(@Nullable Class<?> rootType, boolean reportCacheabilityProblems, AdditionalDataBuilderFactory additionalDataBuilderFactory) {
+
+    @Inject
+    public DefaultTypeValidationContext(Class<?> rootType, boolean reportCacheabilityProblems, AdditionalDataBuilderFactory additionalDataBuilderFactory) {
         super(rootType, Optional::empty, additionalDataBuilderFactory);
         this.reportCacheabilityProblems = reportCacheabilityProblems;
     }

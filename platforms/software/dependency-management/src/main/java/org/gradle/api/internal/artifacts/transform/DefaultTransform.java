@@ -303,7 +303,7 @@ public class DefaultTransform implements Transform {
         Instantiator instantiator,
         ServiceLookup internalServices
     ) {
-        DefaultTypeValidationContext validationContext = instantiator.newInstance(DefaultTypeValidationContext.class, null, cacheable, internalServices.get(AdditionalDataBuilderFactory.class));
+        DefaultTypeValidationContext validationContext = instantiator.newInstance(DefaultTypeValidationContext.class, Object.class, cacheable, internalServices.get(AdditionalDataBuilderFactory.class));
         InputFingerprinter.Result result = inputFingerprinter.fingerprintInputProperties(
             ImmutableSortedMap.of(),
             ImmutableSortedMap.of(),

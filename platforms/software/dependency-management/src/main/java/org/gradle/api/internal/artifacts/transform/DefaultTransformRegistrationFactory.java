@@ -102,7 +102,7 @@ public class DefaultTransformRegistrationFactory implements TransformRegistratio
         TypeMetadata actionMetadata = actionMetadataStore.getTypeMetadata(implementation);
         boolean cacheable = implementation.isAnnotationPresent(CacheableTransform.class);
         Instantiator instantiator = (Instantiator) internalServices.get(Instantiator.class);
-        DefaultTypeValidationContext validationContext = instantiator.newInstance(DefaultTypeValidationContext.class, null, cacheable, internalServices.get(AdditionalDataBuilderFactory.class));
+        DefaultTypeValidationContext validationContext = instantiator.newInstance(DefaultTypeValidationContext.class, Object.class, cacheable, internalServices.get(AdditionalDataBuilderFactory.class));
         actionMetadata.visitValidationFailures(null, validationContext);
 
         // Should retain this on the metadata rather than calculate on each invocation

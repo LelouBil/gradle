@@ -28,7 +28,6 @@ import org.gradle.plugin.use.PluginId;
 import org.gradle.problems.buildtree.ProblemStream;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -38,7 +37,7 @@ abstract public class ProblemRecordingTypeValidationContext implements TypeValid
     private final AdditionalDataBuilderFactory additionalDataBuilderFactory;
 
     public ProblemRecordingTypeValidationContext(
-        @Nullable Class<?> rootType,
+        Class<?> rootType,
         Supplier<Optional<PluginId>> pluginId,
         AdditionalDataBuilderFactory additionalDataBuilderFactory
     ) {
@@ -59,7 +58,7 @@ abstract public class ProblemRecordingTypeValidationContext implements TypeValid
     @Override
     public void visitPropertyProblem(Action<? super TypeAwareProblemBuilder> problemSpec) {
         DefaultTypeAwareProblemBuilder problemBuilder = getDefaultTypeAwareProblemBuilder(problemSpec);
-        problemBuilder.withAnnotationType(rootType);
+        problemBuilder.withAnnotationType(rootType == Object.class ? null : rootType);
         pluginId()
             .map(PluginId::getId)
             .ifPresent(id -> problemBuilder.additionalData(TypeValidationDataSpec.class, data -> data.pluginId(id)));
