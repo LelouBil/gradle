@@ -63,7 +63,7 @@ public class VariantResolvingArtifactSet implements ArtifactSet {
     private final GraphVariantSelector graphVariantSelector;
     private final AttributesSchemaInternal consumerSchema;
 
-    private final CalculatedValueContainer<ImmutableList<ResolvedVariant>, ValueCalculator<ImmutableList<ResolvedVariant>>> ownArtifacts;
+    private final CalculatedValue<ImmutableList<ResolvedVariant>> ownArtifacts;
 
     public VariantResolvingArtifactSet(
         VariantArtifactResolver variantResolver,
