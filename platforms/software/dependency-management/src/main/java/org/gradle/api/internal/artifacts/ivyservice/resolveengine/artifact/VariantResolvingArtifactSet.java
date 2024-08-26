@@ -40,6 +40,7 @@ import org.gradle.internal.model.CalculatedValue;
 import org.gradle.internal.model.CalculatedValueContainerFactory;
 import org.gradle.internal.resolve.resolver.VariantArtifactResolver;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -107,8 +108,7 @@ public class VariantResolvingArtifactSet implements ArtifactSet {
             ImmutableList<ResolvedVariant> variants;
             try {
                 if (!spec.getSelectFromAllVariants()) {
-                    ownArtifacts.finalizeIfNotAlready();
-                    variants = ownArtifacts.get();
+                    variants = getOwnArtifacts();
                 } else {
                     variants = getArtifactVariantsForReselection(spec.getRequestAttributes());
                 }
@@ -123,6 +123,12 @@ public class VariantResolvingArtifactSet implements ArtifactSet {
             ResolvedVariantSet variantSet = new DefaultResolvedVariantSet(componentId, producerSchema, overriddenAttributes, variants);
             return variantSelector.select(variantSet, spec.getRequestAttributes(), spec.getAllowNoMatchingVariants(), this::asTransformed);
         }
+    }
+
+    @Nonnull
+    private ImmutableList<ResolvedVariant> getOwnArtifacts() {
+        ownArtifacts.finalizeIfNotAlready();
+        return ownArtifacts.get();
     }
 
     private ResolvedArtifactSet asTransformed(ResolvedVariant sourceVariant, VariantDefinition variantDefinition, TransformUpstreamDependenciesResolverFactory dependenciesResolverFactory, TransformedVariantFactory transformedVariantFactory) {
