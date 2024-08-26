@@ -77,17 +77,15 @@ public class TaskNodeFactory {
     }
 
     public TaskNode getOrCreateNode(Task task) {
-        return nodes.computeIfAbsent(task, this::createTaskNode);
+        return nodes.computeIfAbsent(task, it -> createTaskNode(Cast.uncheckedNonnullCast(it)));
     }
 
-    private TaskNode createTaskNode(Task task) {
-        TaskNode node;
-        if (((ProjectInternal) task.getProject()).getGradle().getIdentityPath().equals(thisBuild.getIdentityPath())) {
-            node = new LocalTaskNode((TaskInternal) task, new DefaultWorkValidationContext(typeOriginInspectorFactory.forTask(task)), resolveMutationsNodeFactory);
-        } else {
-            node = TaskInAnotherBuild.of((TaskInternal) task, workGraphController);
+    private TaskNode createTaskNode(TaskInternal task) {
+        boolean sameBuild = ((ProjectInternal) task.getProject()).getGradle().getIdentityPath().equals(thisBuild.getIdentityPath());
+        if (sameBuild) {
+            return new LocalTaskNode(task, new DefaultWorkValidationContext(typeOriginInspectorFactory.forTask(task)), resolveMutationsNodeFactory);
         }
-        return node;
+        return TaskInAnotherBuild.of(task, workGraphController);
     }
 
     public void resetState() {
