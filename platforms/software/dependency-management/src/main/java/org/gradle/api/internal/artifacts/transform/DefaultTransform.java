@@ -36,7 +36,6 @@ import org.gradle.api.internal.tasks.NodeExecutionContext;
 import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
 import org.gradle.api.internal.tasks.properties.FileParameterUtils;
 import org.gradle.api.internal.tasks.properties.InputParameterUtils;
-import org.gradle.api.problems.internal.AdditionalDataBuilderFactory;
 import org.gradle.api.problems.internal.GradleCoreProblemGroup;
 import org.gradle.api.problems.internal.Problem;
 import org.gradle.api.provider.Provider;
@@ -76,6 +75,7 @@ import org.gradle.internal.properties.PropertyValue;
 import org.gradle.internal.properties.PropertyVisitor;
 import org.gradle.internal.properties.bean.PropertyWalker;
 import org.gradle.internal.reflect.DefaultTypeValidationContext;
+import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.reflect.validation.TypeValidationContext;
 import org.gradle.internal.reflect.validation.TypeValidationProblemRenderer;
 import org.gradle.internal.service.ServiceLookup;
@@ -158,7 +158,7 @@ public class DefaultTransform implements Transform {
         this.dependenciesLineEndingSensitivity = dependenciesLineEndingSensitivity;
         this.isolatedParameters = calculatedValueContainerFactory.create(Describables.of("parameters of", this),
             new IsolateTransformParameters(parameterObject, implementationClass, cacheable, owner, parameterPropertyWalker, isolatableFactory, buildOperationRunner, classLoaderHierarchyHasher,
-                fileCollectionFactory, (AdditionalDataBuilderFactory) internalServices.get(AdditionalDataBuilderFactory.class)));
+                fileCollectionFactory, (Instantiator) internalServices.get(Instantiator.class)));
     }
 
     /**
@@ -299,9 +299,9 @@ public class DefaultTransform implements Transform {
         Hasher hasher,
         Object parameterObject,
         boolean cacheable,
-        AdditionalDataBuilderFactory additionalDataBuilderFactory
+        Instantiator instantiator
     ) {
-        DefaultTypeValidationContext validationContext = DefaultTypeValidationContext.withoutRootType(cacheable, additionalDataBuilderFactory);
+        DefaultTypeValidationContext validationContext = instantiator.newInstance(DefaultTypeValidationContext.class, cacheable, null);
         InputFingerprinter.Result result = inputFingerprinter.fingerprintInputProperties(
             ImmutableSortedMap.of(),
             ImmutableSortedMap.of(),
@@ -570,7 +570,7 @@ public class DefaultTransform implements Transform {
         private final FileCollectionFactory fileCollectionFactory;
         private final boolean cacheable;
         private final Class<?> implementationClass;
-        private final AdditionalDataBuilderFactory additionalDataBuilderFactory;
+        private final Instantiator instantiator;
 
         public IsolateTransformParameters(
             @Nullable TransformParameters parameterObject,
@@ -582,7 +582,7 @@ public class DefaultTransform implements Transform {
             BuildOperationRunner buildOperationRunner,
             ClassLoaderHierarchyHasher classLoaderHierarchyHasher,
             FileCollectionFactory fileCollectionFactory,
-            AdditionalDataBuilderFactory additionalDataBuilderFactory
+            Instantiator instantiator
         ) {
             this.parameterObject = parameterObject;
             this.implementationClass = implementationClass;
@@ -593,7 +593,7 @@ public class DefaultTransform implements Transform {
             this.buildOperationRunner = buildOperationRunner;
             this.classLoaderHierarchyHasher = classLoaderHierarchyHasher;
             this.fileCollectionFactory = fileCollectionFactory;
-            this.additionalDataBuilderFactory = additionalDataBuilderFactory;
+            this.instantiator = instantiator;
         }
 
         @Nullable
@@ -701,7 +701,7 @@ public class DefaultTransform implements Transform {
                             hasher,
                             isolatedTransformParameters,
                             cacheable,
-                            additionalDataBuilderFactory
+                            instantiator
                         );
                         context.setResult(FingerprintTransformInputsOperation.Result.INSTANCE);
                     }

@@ -46,8 +46,7 @@ internal
 class FlowParametersInstantiator(
     inspectionSchemeFactory: InspectionSchemeFactory,
     instantiatorFactory: InstantiatorFactory,
-    services: ServiceRegistry,
-    val additionalDataBuilderFactory: AdditionalDataBuilderFactory
+    val services: ServiceRegistry
 ) {
     fun <P : FlowParameters> newInstance(parametersType: Class<P>, configure: (P) -> Unit): P {
         return instantiator.newInstance(parametersType).also {
@@ -61,9 +60,13 @@ class FlowParametersInstantiator(
         val problems = ImmutableList.builder<Problem>()
         inspection.propertyWalker.visitProperties(
             parameters,
-            object : ProblemRecordingTypeValidationContext(type, { Optional.empty() }, additionalDataBuilderFactory) {
+            object : ProblemRecordingTypeValidationContext(type, { Optional.empty() }) {
                 override fun recordProblem(problem: Problem) {
                     problems.add(problem)
+                }
+
+                override fun getAdditionalDataBuilderFactory(): AdditionalDataBuilderFactory {
+                    return services.get(AdditionalDataBuilderFactory::class.java)
                 }
             },
             object : PropertyVisitor {

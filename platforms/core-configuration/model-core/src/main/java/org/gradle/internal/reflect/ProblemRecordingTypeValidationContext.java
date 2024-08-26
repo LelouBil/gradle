@@ -29,22 +29,23 @@ import org.gradle.problems.buildtree.ProblemStream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 abstract public class ProblemRecordingTypeValidationContext implements TypeValidationContext {
     private final Class<?> rootType;
     private final Supplier<Optional<PluginId>> pluginId;
-    private final AdditionalDataBuilderFactory additionalDataBuilderFactory;
+
+    @Inject
+    protected abstract AdditionalDataBuilderFactory getAdditionalDataBuilderFactory();
 
     public ProblemRecordingTypeValidationContext(
         @Nullable Class<?> rootType,
-        Supplier<Optional<PluginId>> pluginId,
-        AdditionalDataBuilderFactory additionalDataBuilderFactory
+        Supplier<Optional<PluginId>> pluginId
     ) {
         this.rootType = rootType;
         this.pluginId = pluginId;
-        this.additionalDataBuilderFactory = additionalDataBuilderFactory;
     }
 
     @Override
@@ -67,7 +68,7 @@ abstract public class ProblemRecordingTypeValidationContext implements TypeValid
     }
 
     private @Nonnull DefaultTypeAwareProblemBuilder getDefaultTypeAwareProblemBuilder(Action<? super TypeAwareProblemBuilder> problemSpec) {
-        DefaultTypeAwareProblemBuilder problemBuilder = new DefaultTypeAwareProblemBuilder(new DefaultProblemBuilder((ProblemStream) null, additionalDataBuilderFactory));
+        DefaultTypeAwareProblemBuilder problemBuilder = new DefaultTypeAwareProblemBuilder(new DefaultProblemBuilder((ProblemStream) null, getAdditionalDataBuilderFactory()));
         problemSpec.execute(problemBuilder);
         return problemBuilder;
     }

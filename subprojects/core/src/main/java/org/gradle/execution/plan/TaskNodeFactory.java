@@ -25,6 +25,7 @@ import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.plugins.PluginManagerInternal;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.plugins.PluginContainer;
+import org.gradle.api.problems.internal.InternalProblems;
 import org.gradle.composite.internal.BuildTreeWorkGraphController;
 import org.gradle.internal.Cast;
 import org.gradle.internal.execution.WorkValidationContext;
@@ -54,17 +55,20 @@ public class TaskNodeFactory {
     private final GradleInternal thisBuild;
     private final DefaultTypeOriginInspectorFactory typeOriginInspectorFactory;
     private final Function<LocalTaskNode, ResolveMutationsNode> resolveMutationsNodeFactory;
+    private final InternalProblems problems;
 
     public TaskNodeFactory(
         GradleInternal thisBuild,
         BuildTreeWorkGraphController workGraphController,
         NodeValidator nodeValidator,
         BuildOperationRunner buildOperationRunner,
-        ExecutionNodeAccessHierarchies accessHierarchies
+        ExecutionNodeAccessHierarchies accessHierarchies,
+        InternalProblems problems
     ) {
         this.thisBuild = thisBuild;
         this.workGraphController = workGraphController;
         this.typeOriginInspectorFactory = new DefaultTypeOriginInspectorFactory();
+        this.problems = problems;
         resolveMutationsNodeFactory = localTaskNode -> new ResolveMutationsNode(localTaskNode, nodeValidator, buildOperationRunner, accessHierarchies);
     }
 

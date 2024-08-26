@@ -19,7 +19,6 @@ package org.gradle.internal.reflect;
 import com.google.common.collect.ImmutableList;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.problems.ProblemId;
-import org.gradle.api.problems.internal.AdditionalDataBuilderFactory;
 import org.gradle.api.problems.internal.DefaultProblemId;
 import org.gradle.api.problems.internal.GradleCoreProblemGroup;
 import org.gradle.api.problems.internal.Problem;
@@ -32,22 +31,14 @@ import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
-public class DefaultTypeValidationContext extends ProblemRecordingTypeValidationContext {
+public abstract class DefaultTypeValidationContext extends ProblemRecordingTypeValidationContext {
 
     public static final String MISSING_NORMALIZATION_ANNOTATION = "MISSING_NORMALIZATION_ANNOTATION";
     private final boolean reportCacheabilityProblems;
     private final ImmutableList.Builder<Problem> problems = ImmutableList.builder();
 
-    public static DefaultTypeValidationContext withRootType(Class<?> rootType, boolean cacheable, AdditionalDataBuilderFactory additionalDataBuilderFactory) {
-        return new DefaultTypeValidationContext(rootType, cacheable, additionalDataBuilderFactory);
-    }
-
-    public static DefaultTypeValidationContext withoutRootType(boolean reportCacheabilityProblems, AdditionalDataBuilderFactory additionalDataBuilderFactory) {
-        return new DefaultTypeValidationContext(null, reportCacheabilityProblems, additionalDataBuilderFactory);
-    }
-
-    private DefaultTypeValidationContext(@Nullable Class<?> rootType, boolean reportCacheabilityProblems, AdditionalDataBuilderFactory additionalDataBuilderFactory) {
-        super(rootType, Optional::empty, additionalDataBuilderFactory);
+    public DefaultTypeValidationContext(@Nullable Class<?> rootType, boolean reportCacheabilityProblems) {
+        super(rootType, Optional::empty);
         this.reportCacheabilityProblems = reportCacheabilityProblems;
     }
 
