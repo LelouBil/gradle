@@ -213,8 +213,7 @@ class WorkNodeCodec(
 
         val partialResultsRef = AtomicReference<PersistentList<List<PostExecutionNodes>>>(PersistentList.of())
 
-        // TODO:parallel-cc is this message useful for the context where it may show?
-        runBuildOperations(parallelStore, "saving state nodes" ) {
+        runBuildOperations(parallelStore, "saving work graph" ) {
             groupedNodes.entries.map { (nodeOwner, groupNodes) ->
                 val groupPath = nodeOwner.path()
                 OperationInfo(displayName = "Storing $groupPath", progressDisplayName = groupPath.path) {
@@ -248,7 +247,7 @@ class WorkNodeCodec(
             Path.path(readString())
         }
 
-        runBuildOperations(parallel = parallelLoad, message = "reading state nodes") {
+        runBuildOperations(parallel = parallelLoad, message = "reading work graph") {
             groupPaths.map { groupPath ->
                 OperationInfo(displayName = "Loading $groupPath", progressDisplayName = groupPath.path) {
                     contextSource.readContextFor(this@readNodes, groupPath).readWith(Unit) {
