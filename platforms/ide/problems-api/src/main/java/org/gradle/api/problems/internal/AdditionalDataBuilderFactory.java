@@ -103,7 +103,7 @@ public class AdditionalDataBuilderFactory {
         throw new IllegalArgumentException(illegalArgumentMessage);
     }
 
-    /* package */ <U extends AdditionalDataSpec> AdditionalDataBuilder<? extends AdditionalData> createAdditionalDataBuilder(Class<? extends U> specType, @Nullable AdditionalData additionalData) {
+    public <U extends AdditionalDataSpec> AdditionalDataBuilder<? extends AdditionalData> createAdditionalDataBuilder(Class<? extends U> specType, @Nullable AdditionalData additionalData) {
         if (additionalData == null) {
             return builderFor(specType, null, "Unsupported type: " + specType);
         }

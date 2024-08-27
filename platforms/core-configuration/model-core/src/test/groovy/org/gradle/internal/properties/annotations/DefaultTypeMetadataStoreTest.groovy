@@ -29,8 +29,13 @@ import org.gradle.api.internal.tasks.properties.DefaultPropertyTypeResolver
 import org.gradle.api.model.ReplacedBy
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.problems.Severity
+import org.gradle.api.problems.internal.AdditionalData
+import org.gradle.api.problems.internal.AdditionalDataBuilder
 import org.gradle.api.problems.internal.AdditionalDataBuilderFactory
+import org.gradle.api.problems.internal.AdditionalDataSpec
 import org.gradle.api.problems.internal.GradleCoreProblemGroup
+import org.gradle.api.problems.internal.TypeValidationData
+import org.gradle.api.problems.internal.TypeValidationDataSpec
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.CompileClasspath
@@ -450,8 +455,16 @@ class DefaultTypeMetadataStoreTest extends Specification implements ValidationMe
         }
     }
 
+    interface TestBuilder extends AdditionalDataBuilder, TypeValidationDataSpec {}
+
     private List<String> collectProblems(TypeMetadata metadata) {
-        def validationContext = TestUtil.instantiatorFactory().inject().newInstance(DefaultTypeValidationContext.class, Object.class, false, Stub(AdditionalDataBuilderFactory.class))
+        def additionalDataBuilder = Stub(TestBuilder.class) {
+            build() >> Stub(TypeValidationData.class)
+        }
+        def additionalDataBuilderFactory = Stub(AdditionalDataBuilderFactory.class) {
+            createAdditionalDataBuilder(_ as Class<? extends AdditionalDataSpec>, _ as AdditionalData) >> additionalDataBuilder
+        }
+        def validationContext = TestUtil.instantiatorFactory().inject().newInstance(DefaultTypeValidationContext.class, Object.class, false, additionalDataBuilderFactory)
         metadata.visitValidationFailures(null, validationContext)
         return validationContext.problems.collect { normaliseLineSeparators(renderMinimalInformationAbout(it)) }
     }
