@@ -137,9 +137,7 @@ A custom configuration allows you to define a distinct group of dependencies tha
 
 [source,kotlin]
 ----
-configurations {
-    customConfig
-}
+val customConfig by configurations.creating
 
 dependencies {
     customConfig("org.example:example-lib:1.0")
