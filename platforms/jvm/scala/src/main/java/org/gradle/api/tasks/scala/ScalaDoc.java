@@ -186,9 +186,9 @@ public abstract class ScalaDoc extends SourceTask {
     @TaskAction
     protected void generate() {
         ScalaDocOptions options = getScalaDocOptions();
-        String docTitle = !GUtil.isTrue(options.getDocTitle().getOrNull())
-            ? getTitle().getOrNull()
-            : options.getDocTitle().getOrNull();
+        String docTitle = options.getDocTitle()
+            .orElse(getTitle())
+            .getOrNull();
 
         WorkQueue queue = getWorkerExecutor().processIsolation(worker -> {
             worker.getClasspath().from(getScalaClasspath());
