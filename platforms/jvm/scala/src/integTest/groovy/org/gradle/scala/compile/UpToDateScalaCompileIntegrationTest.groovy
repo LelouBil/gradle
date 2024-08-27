@@ -144,9 +144,6 @@ class UpToDateScalaCompileIntegrationTest extends AbstractIntegrationSpec implem
 
             tasks.withType(ScalaCompile) {
                 scalaCompileOptions.with {
-                    if (!additionalParameters.isPresent()) {
-                        additionalParameters = []
-                    }
                     additionalParameters.add("-target:8")
                 }
             }
@@ -201,9 +198,6 @@ class UpToDateScalaCompileIntegrationTest extends AbstractIntegrationSpec implem
 
             tasks.withType(ScalaCompile) {
                 scalaCompileOptions.with {
-                    if (!additionalParameters.isPresent()) {
-                        additionalParameters = []
-                    }
                     additionalParameters.add("-target:8")
                 }
             }
