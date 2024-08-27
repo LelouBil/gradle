@@ -21,7 +21,6 @@ import org.gradle.api.component.SoftwareComponentContainer;
 import org.gradle.api.internal.CollectionCallbackActionDecorator;
 import org.gradle.api.internal.DomainObjectContext;
 import org.gradle.api.internal.ExternalProcessStartedListener;
-import org.gradle.api.internal.MutationGuards;
 import org.gradle.api.internal.artifacts.DependencyManagementServices;
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider;
 import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder;
@@ -41,17 +40,18 @@ import org.gradle.api.internal.initialization.ScriptHandlerFactory;
 import org.gradle.api.internal.initialization.ScriptHandlerInternal;
 import org.gradle.api.internal.plugins.DefaultPluginManager;
 import org.gradle.api.internal.plugins.ImperativeOnlyPluginTarget;
+import org.gradle.api.internal.plugins.ModelDefaultsApplyingPluginTarget;
 import org.gradle.api.internal.plugins.PluginInstantiator;
 import org.gradle.api.internal.plugins.PluginManagerInternal;
 import org.gradle.api.internal.plugins.PluginRegistry;
 import org.gradle.api.internal.plugins.PluginTarget;
 import org.gradle.api.internal.plugins.PluginTargetType;
-import org.gradle.api.internal.plugins.ModelDefaultsApplyingPluginTarget;
 import org.gradle.api.internal.plugins.RuleBasedPluginTarget;
 import org.gradle.api.internal.project.CrossProjectConfigurator;
 import org.gradle.api.internal.project.CrossProjectModelAccess;
 import org.gradle.api.internal.project.DefaultAntBuilderFactory;
 import org.gradle.api.internal.project.DeferredProjectConfiguration;
+import org.gradle.api.internal.project.ProjectIdentity;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.project.ProjectRegistry;
 import org.gradle.api.internal.project.ProjectState;
@@ -347,15 +347,10 @@ public class ProjectScopeServices implements ServiceRegistrationProvider {
             return delegate.projectPath(name);
         }
 
-        @Override
-        public Path getProjectPath() {
-            return delegate.getProjectPath();
-        }
-
         @Nullable
         @Override
-        public Path getProjectIdentityPath() {
-            return delegate.getProjectIdentityPath();
+        public ProjectIdentity getProjectIdentity() {
+            return delegate.getProjectIdentity();
         }
 
         @Nullable
@@ -387,6 +382,11 @@ public class ProjectScopeServices implements ServiceRegistrationProvider {
         @Override
         public boolean isPluginContext() {
             return false;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "buildscript of " + delegate.getDisplayName();
         }
     }
 
@@ -423,7 +423,7 @@ public class ProjectScopeServices implements ServiceRegistrationProvider {
         CollectionCallbackActionDecorator collectionCallbackActionDecorator,
         CrossProjectConfigurator projectConfigurator
     ) {
-        return new DefaultDomainObjectCollectionFactory(instantiatorFactory, projectScopeServiceRegistry, collectionCallbackActionDecorator, MutationGuards.of(projectConfigurator));
+        return new DefaultDomainObjectCollectionFactory(instantiatorFactory, projectScopeServiceRegistry, collectionCallbackActionDecorator, projectConfigurator.getLazyBehaviorGuard());
     }
 
     @Provides

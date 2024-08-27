@@ -63,7 +63,6 @@ import org.gradle.util.GradleVersion;
 import org.gradle.util.internal.ClosureBackedAction;
 import org.gradle.util.internal.CollectionUtils;
 import org.gradle.util.internal.GFileUtils;
-import org.gradle.util.internal.TextUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -1116,11 +1115,15 @@ public abstract class AbstractGradleExecuter implements GradleExecuter, Resettab
         }
 
         if (consoleType != null) {
-            allArgs.add("--console=" + TextUtil.toLowerCaseLocaleSafe(consoleType.toString()));
+            String s = consoleType.toString();
+            allArgs.add("--console=" + s.toLowerCase(Locale.ROOT));
         }
 
+        // Rich console output is difficult to check, so we disable warnings
+        WarningMode warningMode = isRichConsole() ? WarningMode.None : this.warningMode;
         if (warningMode != null) {
-            allArgs.add("--warning-mode=" + TextUtil.toLowerCaseLocaleSafe(warningMode.toString()));
+            String s = warningMode.toString();
+            allArgs.add("--warning-mode=" + s.toLowerCase(Locale.ROOT));
         }
 
         if (disableToolchainDownload) {
@@ -1360,12 +1363,9 @@ public abstract class AbstractGradleExecuter implements GradleExecuter, Resettab
     protected Action<ExecutionResult> getResultAssertion() {
         boolean shouldCheckDeprecations = checkDeprecations;
 
-        // Rich consoles mess with our deprecation log scraping
-        boolean isAuto = consoleType == null || consoleType == ConsoleOutput.Auto;
-        if ((isAuto && consoleAttachment != ConsoleAttachment.NOT_ATTACHED) ||
-            consoleType == ConsoleOutput.Verbose ||
-            consoleType == ConsoleOutput.Rich
-        ) {
+        // Rich consoles mess with our deprecation log scraping,
+        // and we anyway set --warning-mode=none for rich consoles, see #getAllArgs()
+        if (isRichConsole()) {
             shouldCheckDeprecations = false;
         }
 
@@ -1389,6 +1389,13 @@ public abstract class AbstractGradleExecuter implements GradleExecuter, Resettab
             shouldCheckDeprecations,
             jdkWarningChecksOn
         );
+    }
+
+    private boolean isRichConsole() {
+        boolean isAuto = consoleType == null || consoleType == ConsoleOutput.Auto;
+        return isAuto && consoleAttachment != ConsoleAttachment.NOT_ATTACHED
+            || consoleType == ConsoleOutput.Verbose
+            || consoleType == ConsoleOutput.Rich;
     }
 
     @Override

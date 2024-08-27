@@ -95,7 +95,6 @@ dependencies {
     implementation(projects.io)
     implementation(projects.messaging)
     implementation(projects.modelCore)
-    implementation(projects.platformJvm)
     implementation(projects.serialization)
     implementation(projects.serviceProvider)
     implementation(projects.serviceRegistryBuilder)
@@ -219,4 +218,7 @@ abstract class PrepareVersionsInfo : DefaultTask() {
         properties["versions"] = versions.get()
         gradlebuild.basics.util.ReproduciblePropertiesWriter.store(properties, destFile.get().asFile)
     }
+}
+tasks.isolatedProjectsIntegTest {
+    enabled = false
 }

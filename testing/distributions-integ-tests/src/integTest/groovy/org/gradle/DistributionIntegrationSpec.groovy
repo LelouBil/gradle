@@ -83,6 +83,7 @@ abstract class DistributionIntegrationSpec extends AbstractIntegrationSpec {
         "input-tracking",
         "installation-beacon",
         "instrumentation-agent-services",
+        "instrumentation-reporting",
         "internal-instrumentation-api",
         "io",
         "java-api-extractor",
@@ -98,6 +99,8 @@ abstract class DistributionIntegrationSpec extends AbstractIntegrationSpec {
         "persistent-cache",
         "problems",
         "problems-api",
+        "problems-rendering",
+        "process-memory-services",
         "process-services",
         "resources",
         "runtime-api-info",
@@ -132,7 +135,7 @@ abstract class DistributionIntegrationSpec extends AbstractIntegrationSpec {
      * Change this whenever you add or remove subprojects for distribution-packaged plugins (lib/plugins).
      */
     int getPackagedPluginsJarCount() {
-        80
+        81
     }
 
     /**

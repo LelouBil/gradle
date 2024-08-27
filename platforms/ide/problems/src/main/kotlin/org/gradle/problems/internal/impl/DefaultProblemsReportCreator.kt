@@ -20,7 +20,9 @@ import org.gradle.api.internal.StartParameterInternal
 import org.gradle.api.internal.file.temp.TemporaryFileProvider
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import org.gradle.api.problems.internal.DefaultProblemGroup
 import org.gradle.api.problems.internal.FileLocation
+import org.gradle.api.problems.internal.LineInFileLocation
 import org.gradle.api.problems.internal.Problem
 import org.gradle.internal.buildoption.InternalOptions
 import org.gradle.internal.cc.impl.problems.BuildNameProvider
@@ -65,12 +67,15 @@ class DefaultProblemsReportCreator(
         report.writeReportFileTo(reportDir, object : JsonSource {
             override fun writeToJson(jsonWriter: JsonWriter) {
                 with(jsonWriter) {
-                    property("reportContext", "problem report")
-                    property("totalProblemCount", problemCount.toString())
-                    buildNameProvider.buildName()?.let { property("buildName", it) }
-                    property("requestedTasks", taskNames.joinToString(" "))
-                    property("documentationLink", DocumentationRegistry().getDocumentationFor("problem-report"))
-                    property("documentationLinkCaption", "Problem report")
+                    property("problemsReport") {
+                        jsonObject {
+                            property("totalProblemCount") { write(problemCount.toString()) }
+                            buildNameProvider.buildName()?.let { property("buildName", it) }
+                            property("requestedTasks", taskNames.joinToString(" "))
+                            property("documentationLink", DocumentationRegistry().getDocumentationFor("problem-report"))
+                            property("documentationLinkCaption", "Problem report")
+                        }
+                    }
                 }
             }
         })?.let {
@@ -81,43 +86,70 @@ class DefaultProblemsReportCreator(
 
     override fun emit(problem: Problem, id: OperationIdentifier?) {
         problemCount.incrementAndGet()
-        report.onProblem(object : JsonSource {
-            override fun writeToJson(jsonWriter: JsonWriter) {
-                with(jsonWriter) {
-                    jsonObject {
-                        property("trace") {
-                            jsonObjectList(listOf(getFirstFileLocation())) { path ->
-                                property("kind", "Project")
-                                property("path", path)
-                            }
-                        }
+        report.onProblem(JsonProblemWriter(problem, failureDecorator, failureFactory))
+    }
+}
 
-                        property("problem") {
-                            writeStructuredMessage(StructuredMessage.forText(problem.definition.id.displayName))
-                        }
-                        problem.details?.let {
-                            property("problemDetails") {
-                                writeStructuredMessage(
-                                    StructuredMessage.Builder()
-                                        .text(it).build()
-                                )
+class JsonProblemWriter(private val problem: Problem, private val failureDecorator: FailureDecorator, private val failureFactory: FailureFactory) : JsonSource {
+    override fun writeToJson(jsonWriter: JsonWriter) {
+        with(jsonWriter) {
+            jsonObject {
+                val fileLocations = problem.locations.filterIsInstance<FileLocation>()
+                if (fileLocations.isNotEmpty()) {
+                    property("fileLocations") {
+                        jsonObjectList(
+                            fileLocations
+                        ) { location ->
+                            property("path", location.path)
+                            if (location is LineInFileLocation) {
+                                if (location.line >= 0) {
+                                    property("line", location.line)
+                                }
+                                if (location.column >= 0) {
+                                    property("column", location.column)
+                                }
+                                if (location.length >= 0) {
+                                    property("length", location.length)
+                                }
                             }
                         }
-                        problem.definition.documentationLink?.let {
-                            property("documentationLink", it.url)
-                        }
-                        problem.exception?.let {
-                            writeError(failureDecorator.decorate(failureFactory.create(it)))
+                    }
+                }
+
+                property("problem") { writeStructuredMessage(StructuredMessage.forText(problem.definition.id.displayName)) }
+                property("severity", problem.definition.severity.toString().uppercase())
+
+                problem.details?.let {
+                    property("problemDetails") {
+                        writeStructuredMessage(
+                            StructuredMessage.Builder()
+                                .text(it).build()
+                        )
+                    }
+                }
+                problem.definition.documentationLink?.let { property("documentationLink", it.url) }
+                problem.exception?.let { writeError(failureDecorator.decorate(failureFactory.create(it))) }
+                property("category") {
+                    val list = listOf(DefaultProblemGroup(problem.definition.id.name, problem.definition.id.displayName)) +
+                        generateSequence(problem.definition.id.group) { it.parent }.toList().asReversed()
+                    jsonObjectList(list) { group ->
+                        property("name", group.name)
+                        property("displayName", group.displayName)
+                    }
+                }
+
+                val solutions = problem.solutions
+                if (solutions.isNotEmpty()) {
+                    property("solutions") {
+                        jsonList(solutions) { solution ->
+                            writeStructuredMessage(
+                                StructuredMessage.Builder()
+                                    .text(solution).build()
+                            )
                         }
                     }
                 }
             }
-
-            private fun getFirstFileLocation(): String {
-                return problem.locations
-                    .find { it is FileLocation }
-                    ?.let { it as FileLocation }?.path ?: "<N/A>"
-            }
-        })
+        }
     }
 }
